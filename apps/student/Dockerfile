@@ -29,10 +29,10 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN addgroup --system --gid 1001 nodejs \
  && adduser --system --uid 1001 nextjs
 COPY --from=builder --chown=nextjs:nodejs /app/apps/student/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/apps/student/.next/static ./.next/static
-COPY --from=builder --chown=nextjs:nodejs /app/apps/student/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/apps/student/.next/static ./apps/student/.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/apps/student/public ./apps/student/public
 USER nextjs
 EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
-CMD ["node", "server.js"]
+CMD ["node", "apps/student/server.js"]
