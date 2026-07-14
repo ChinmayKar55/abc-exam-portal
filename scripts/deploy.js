@@ -80,8 +80,8 @@ const commands = {
 
     console.log(`\n🚀  Creating project "${PROJECT}" on VM ${VM_ID}...`);
     const result = await api("POST", `${vmPath}/docker`, {
-      project_name:    PROJECT,
-      compose_content: composeContent,
+      project_name: PROJECT,
+      content:      composeContent,
     });
     console.log("✅  Project creation triggered.");
     console.log("    Action ID:", result.id ?? "(see response)");

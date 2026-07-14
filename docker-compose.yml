@@ -51,25 +51,19 @@ services:
     depends_on:
       postgres: { condition: service_healthy }
       redis:    { condition: service_healthy }
-    healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:8081/health || exit 1"]
-      interval: 15s
-      timeout: 5s
-      retries: 3
-
   student:
     image: ${REGISTRY}/abc-exam-student:${STUDENT_TAG:-latest}
     restart: unless-stopped
     networks: [abc-exam-net]
     depends_on:
-      api: { condition: service_healthy }
+      api: { condition: service_started }
 
   admin:
     image: ${REGISTRY}/abc-exam-admin:${ADMIN_TAG:-latest}
     restart: unless-stopped
     networks: [abc-exam-net]
     depends_on:
-      api: { condition: service_healthy }
+      api: { condition: service_started }
 
   nginx:
     image: nginx:alpine

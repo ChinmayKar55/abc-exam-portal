@@ -1,6 +1,7 @@
 {
   "name": "abc-exam-portal",
   "private": true,
+  "type": "module",
   "workspaces": ["apps/*", "shared/*"],
   "scripts": {
     "dev:student": "npm run dev --workspace=apps/student",
