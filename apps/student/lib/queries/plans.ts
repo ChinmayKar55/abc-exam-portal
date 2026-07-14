@@ -81,6 +81,5 @@ export const planQueries = {
       .then((r) => r.data),
 
   verifyPayment: (payload: VerifyPaymentRequest) =>
-    apiPost<VerifyPaymentResponse>("verify-payment", payload)
-      .then((r) => r.data),
+    apiPost<VerifyPaymentResponse>("verify-payment", payload),
 }
