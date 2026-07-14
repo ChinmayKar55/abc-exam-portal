@@ -1,0 +1,14 @@
+{
+  "name": "abc-exam-portal",
+  "private": true,
+  "workspaces": ["apps/*", "shared/*"],
+  "scripts": {
+    "dev:student": "npm run dev --workspace=apps/student",
+    "dev:admin": "npm run dev --workspace=apps/admin",
+    "dev": "concurrently \"npm run dev:student\" \"npm run dev:admin\"",
+    "build": "npm run build --workspaces --if-present"
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.0"
+  }
+}

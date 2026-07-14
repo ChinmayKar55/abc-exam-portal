@@ -1,0 +1,150 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * CSS Custom Properties — derived from tokens.ts
+ * All values use HSL channels (no hsl() wrapper) so shadcn can compose opacity.
+ * Light mode → dark mode mapped here.
+ * NEVER override these in component files — edit tokens.ts instead.
+ */
+
+@layer base {
+  :root {
+    /* ── Backgrounds ──────────────────────────────────── */
+    --background:       210 40% 98%;   /* gray-50  #f8fafc  */
+    --foreground:       222 47% 11%;   /* gray-900 #0f172a  */
+
+    /* ── Card / Surface ───────────────────────────────── */
+    --card:             0 0% 100%;     /* white              */
+    --card-foreground:  222 47% 11%;   /* gray-900           */
+
+    /* ── Popover ──────────────────────────────────────── */
+    --popover:          0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+
+    /* ── Primary — Indigo 600 ─────────────────────────── */
+    --primary:          243 75% 59%;   /* #4f46e5 brand-600  */
+    --primary-foreground: 0 0% 100%;
+
+    /* ── Secondary — Gray 100 ─────────────────────────── */
+    --secondary:        210 40% 96%;   /* gray-100           */
+    --secondary-foreground: 222 47% 11%;
+
+    /* ── Muted ─────────────────────────────────────────── */
+    --muted:            210 40% 96%;
+    --muted-foreground: 215 16% 47%;   /* gray-500           */
+
+    /* ── Accent — Ocean Blue 500 ──────────────────────── */
+    --accent:           199 89% 48%;   /* #0ea5e9 ocean-500  */
+    --accent-foreground: 0 0% 100%;
+
+    /* ── Destructive ──────────────────────────────────── */
+    --destructive:      0 84% 60%;     /* #ef4444            */
+    --destructive-foreground: 0 0% 100%;
+
+    /* ── Borders / Inputs ─────────────────────────────── */
+    --border:           214 32% 91%;   /* gray-200           */
+    --input:            214 32% 91%;
+    --ring:             243 75% 59%;   /* brand-600          */
+
+    /* ── Border radius base ───────────────────────────── */
+    --radius:           0.5rem;        /* tokens.radius.lg   */
+
+    /* ── Sidebar specific ─────────────────────────────── */
+    --sidebar-bg:       222 47% 11%;   /* gray-900           */
+    --sidebar-border:   220 13% 18%;
+    --sidebar-fg:       210 40% 80%;
+    --sidebar-active-bg:243 75% 59%;   /* brand-600          */
+    --sidebar-active-fg:0 0% 100%;
+    --sidebar-hover-bg: 220 13% 16%;
+  }
+
+  .dark {
+    --background:       222 47% 7%;    /* gray-950            */
+    --foreground:       210 40% 98%;   /* gray-50             */
+
+    --card:             222 47% 11%;   /* gray-900            */
+    --card-foreground:  210 40% 98%;
+
+    --popover:          222 47% 11%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary:          243 75% 63%;   /* brand-500 lighter   */
+    --primary-foreground: 0 0% 100%;
+
+    --secondary:        217 33% 17%;   /* gray-800            */
+    --secondary-foreground: 210 40% 98%;
+
+    --muted:            217 33% 17%;
+    --muted-foreground: 215 20% 55%;
+
+    --accent:           199 89% 48%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive:      0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border:           217 33% 20%;
+    --input:            217 33% 20%;
+    --ring:             243 75% 63%;
+
+    --sidebar-bg:       222 47% 6%;
+    --sidebar-border:   220 13% 13%;
+    --sidebar-fg:       215 20% 55%;
+    --sidebar-active-bg:243 75% 59%;
+    --sidebar-active-fg:0 0% 100%;
+    --sidebar-hover-bg: 222 47% 11%;
+  }
+
+  * {
+    @apply border-border;
+    box-sizing: border-box;
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans;
+  }
+
+  /* Focus visible ring — uses brand ring token */
+  :focus-visible {
+    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+  }
+
+  /* Scrollbar styling */
+  ::-webkit-scrollbar       { @apply w-1.5 h-1.5; }
+  ::-webkit-scrollbar-track { @apply bg-transparent; }
+  ::-webkit-scrollbar-thumb { @apply bg-border rounded-full hover:bg-muted-foreground/30; }
+}
+
+/* ── Utility classes derived from tokens ────────────────────── */
+@layer utilities {
+  .text-balance { text-wrap: balance; }
+
+  /* Gradient brand bar used in sidebar active item and hero */
+  .gradient-brand {
+    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)));
+  }
+
+  /* Glass morphism card used in landing */
+  .glass {
+    background: rgba(255,255,255,0.07);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.12);
+  }
+
+  /* Ocean blue text gradient */
+  .text-gradient {
+    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+}

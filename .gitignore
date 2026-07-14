@@ -1,0 +1,31 @@
+# Dependencies
+node_modules/
+
+# Next.js build output
+apps/student/.next/
+apps/admin/.next/
+
+# Production env files — NEVER commit these
+.env.production
+.env.production.local
+.env.deploy
+services/api/.env
+
+# Local dev env files
+.env.local
+apps/student/.env.local
+apps/admin/.env.local
+
+# Go build artifacts
+services/api/server
+services/api/server.exe
+services/api/storage/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+.vscode/settings.json
+
+# TypeScript build info
+*.tsbuildinfo
