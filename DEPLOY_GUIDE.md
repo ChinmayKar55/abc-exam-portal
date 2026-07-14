@@ -13,11 +13,11 @@
 Internet
    │
    ▼
-Your domain (e.g. osssc.in)
+atchinlabs.tech
    │
-   ├── student.osssc.in  →  Student portal (Next.js)
-   ├── admin.osssc.in    →  Admin portal   (Next.js)
-   └── api.osssc.in      →  Backend API    (Go)
+   ├── student.atchinlabs.tech  →  Student portal (Next.js)
+   ├── admin.atchinlabs.tech    →  Admin portal   (Next.js)
+   └── api.atchinlabs.tech      →  Backend API    (Go)
 ```
 
 Everything runs inside Docker containers on your Hostinger KVM 8 VPS.
@@ -29,9 +29,9 @@ When you push code to GitHub, it automatically rebuilds and redeploys — you do
 
 Before starting, make sure you have:
 
-- [ ] A **GitHub account** and this project pushed to a GitHub repository
+- [ ] A **GitHub account** — sign up free at [github.com](https://github.com) if you don't have one. **GHCR (GitHub Container Registry) is automatically included** — it's where your Docker images will be stored. No separate signup needed.
 - [ ] A **Hostinger account** with the KVM 8 VPS purchased and active
-- [ ] A **domain name** (e.g. `osssc.in`) with DNS managed through Hostinger or Cloudflare
+- [ ] Your **domain `atchinlabs.tech`** DNS pointed at your VPS — see Step 7 below
 - [ ] **Node.js 22** installed on your local machine (to run `scripts/deploy.js`)
 - [ ] **Git** installed on your local machine
 
@@ -89,8 +89,8 @@ You need to add **6 secrets**. Here is where to go:
 |---|---|
 | `HOSTINGER_API_TOKEN` | Your Hostinger API token — see Step 3 below for how to get it |
 | `HOSTINGER_VM_ID` | Your VPS numeric ID — see Step 4 below for how to find it |
-| `NEXT_PUBLIC_API_URL` | `https://api.osssc.in/api` (replace with your actual domain) |
-| `NEXT_PUBLIC_WS_URL` | `wss://api.osssc.in` (replace with your actual domain) |
+| `NEXT_PUBLIC_API_URL` | `https://api.atchinlabs.tech/api` |
+| `NEXT_PUBLIC_WS_URL` | `wss://api.atchinlabs.tech` |
 
 > You will come back and add `HOSTINGER_API_TOKEN` and `HOSTINGER_VM_ID` after Steps 3 and 4.
 
@@ -149,37 +149,52 @@ You should now see a prompt like `root@vps-123456:~#` — you are now "inside" y
 
 ---
 
-### Step 7 — Install SSL certificates (HTTPS)
+### Step 7 — Point your domain DNS at the VPS and get SSL certificates
 
-**What is SSL?** It makes your site use `https://` instead of `http://`. Without it, browsers will show scary "Not Secure" warnings and block some features.
+#### 7a — Add DNS subdomains for atchinlabs.tech
 
-First, point your DNS. Go to your domain's DNS settings (Cloudflare or Hostinger DNS) and add these **A records**:
+**What is DNS?** It's like a phonebook — it tells the internet "when someone visits `student.atchinlabs.tech`, send them to this IP address (your VPS)".
 
-| Subdomain | Points to |
-|---|---|
-| `student` | Your VPS IP address |
-| `admin` | Your VPS IP address |
-| `api` | Your VPS IP address |
+1. Log into wherever you registered `atchinlabs.tech` (likely Hostinger or Namecheap)
+2. Find **DNS Zone** or **DNS Management** for the domain
+3. Add three **A records**:
 
-Wait 5–10 minutes for DNS to propagate, then run on the VPS:
+| Name | Type | Value (Points to) |
+|---|---|---|
+| `student` | A | Your VPS IP address |
+| `admin` | A | Your VPS IP address |
+| `api` | A | Your VPS IP address |
+
+> Your VPS IP address is on the hPanel VPS overview page.
+> **If `atchinlabs.tech` is registered through Hostinger:** go to hPanel → Domains → atchinlabs.tech → DNS Zone → Add Record.
+> **If registered elsewhere (Namecheap etc.):** log into that registrar and add the A records there.
+
+Wait **5–10 minutes** for DNS to propagate before the next step.
+
+#### 7b — Install SSL certificates (HTTPS)
+
+**What is SSL?** It makes your site use `https://` instead of `http://`. Without it, browsers show scary "Not Secure" warnings and some features (like WebSockets) won't work.
+
+Run these commands on the VPS (you should still be SSH'd in from Step 6):
 
 ```bash
 apt update && apt install -y certbot
 certbot certonly --standalone \
-  -d student.osssc.in \
-  -d admin.osssc.in \
-  -d api.osssc.in
+  -d student.atchinlabs.tech \
+  -d admin.atchinlabs.tech \
+  -d api.atchinlabs.tech
 ```
-
-> Replace `osssc.in` with your actual domain everywhere.
 
 When asked for an email, enter yours. When asked to agree to terms, type `Y`.
 
 If successful you will see:
 ```
 Congratulations! Your certificate and chain have been saved at:
-/etc/letsencrypt/live/student.osssc.in/fullchain.pem
+/etc/letsencrypt/live/student.atchinlabs.tech/fullchain.pem
 ```
+
+> **Troubleshooting:** If certbot says "Could not bind to port 80", stop nginx temporarily:
+> `docker stop $(docker ps -q --filter name=nginx)` then re-run certbot, then `node scripts/deploy.js restart`
 
 ---
 
@@ -224,16 +239,16 @@ SMTP_HOST=smtp.brevo.com
 SMTP_PORT=587
 SMTP_USER=your_smtp_username
 SMTP_PASS=your_smtp_password
-EMAIL_FROM=noreply@osssc.in
+EMAIL_FROM=noreply@atchinlabs.tech
 
 # Storage
 STORAGE_PROVIDER=local
 STORAGE_LOCAL_PATH=/app/storage
 
-# Your actual live domain URLs
-FRONTEND_URL=https://student.osssc.in
-ADMIN_URL=https://admin.osssc.in
-BACKEND_URL=https://api.osssc.in
+# Your live domain URLs
+FRONTEND_URL=https://student.atchinlabs.tech
+ADMIN_URL=https://admin.atchinlabs.tech
+BACKEND_URL=https://api.atchinlabs.tech
 
 # Container registry — your GitHub username, lowercase
 REGISTRY=ghcr.io/your-github-username-lowercase
@@ -355,9 +370,9 @@ You should see all 6 containers with 🟢 status.
 ### Step 14 — Verify the site is live
 
 Open a browser and go to:
-- `https://student.osssc.in` — should show the student login page
-- `https://admin.osssc.in` — should show the admin login page
-- `https://api.osssc.in/health` — should show `{"status":"ok","service":"abc-exam-portal-api","env":"production"}`
+- `https://student.atchinlabs.tech` — should show the student login page
+- `https://admin.atchinlabs.tech` — should show the admin login page
+- `https://api.atchinlabs.tech/health` — should show `{"status":"ok","service":"abc-exam-portal-api","env":"production"}`
 
 If all three work, **you are live**. 🎉
 
