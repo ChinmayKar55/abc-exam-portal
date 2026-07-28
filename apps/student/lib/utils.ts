@@ -66,7 +66,7 @@ export async function exitFullscreen(): Promise<void> {
     }
 
     try {
-      const parentDoc = doc.defaultView?.parent?.document
+      const parentDoc: Document | undefined = doc.defaultView?.parent?.document
       if (!parentDoc || parentDoc === doc) break
       doc = parentDoc
     } catch {
