@@ -46,6 +46,13 @@ func validate(req interface{}) error {
 		if len(r.Password) < 8 {
 			return fmt.Errorf("password must be at least 8 characters")
 		}
+	case UpdateProfileRequest:
+		if strings.TrimSpace(r.Name) == "" || len(r.Name) < 2 {
+			return fmt.Errorf("name must be at least 2 characters")
+		}
+		if len(r.Phone) < 10 {
+			return fmt.Errorf("phone must be at least 10 digits")
+		}
 	}
 	return nil
 }

@@ -7,7 +7,6 @@ import { useState } from "react"
 import { Eye, EyeOff, Loader2 } from "lucide-react"
 import { registerSchema, type RegisterInput } from "@/lib/schemas/auth"
 import { authQueries } from "@/lib/queries/auth"
-import { useAuthStore } from "@/store/auth"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -15,7 +14,6 @@ import { cn } from "@/lib/utils"
 
 export function RegisterForm() {
   const router = useRouter()
-  const setAuth = useAuthStore((s) => s.setAuth)
   const [showPw, setShowPw] = useState(false)
   const [serverError, setServerError] = useState("")
 
@@ -28,9 +26,8 @@ export function RegisterForm() {
   const onSubmit = async (data: RegisterInput) => {
     setServerError("")
     try {
-      const res = await authQueries.register(data)
-      setAuth(res.user, res.access_token)
-      router.push("/home")
+      await authQueries.register(data)
+      router.push(`/verify-email?email=${encodeURIComponent(data.email)}`)
     } catch {
       setServerError("Registration failed. Email may already be in use.")
     }

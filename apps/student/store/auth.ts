@@ -5,6 +5,7 @@ export interface AuthUser {
   id: string
   name: string
   email: string
+  phone?: string
   role: "student" | "admin"
   emailVerified: boolean
 }
@@ -13,6 +14,7 @@ interface AuthState {
   user: AuthUser | null
   accessToken: string | null
   setAuth: (user: AuthUser, token: string) => void
+  setUser: (user: AuthUser) => void
   setToken: (token: string) => void
   logout: () => void
   isAuthenticated: () => boolean
@@ -36,6 +38,8 @@ export const useAuthStore = create<AuthState>()(
       accessToken: null,
 
       setAuth: (user, accessToken) => { syncCookie(accessToken); set({ user, accessToken }) },
+
+      setUser: (user) => set({ user }),
 
       setToken: (accessToken) => { syncCookie(accessToken); set({ accessToken }) },
 

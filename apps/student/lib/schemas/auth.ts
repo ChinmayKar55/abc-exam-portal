@@ -38,4 +38,11 @@ export type LoginInput = z.infer<typeof loginSchema>
 export type RegisterInput = z.infer<typeof registerSchema>
 export type OtpInput = z.infer<typeof otpSchema>
 export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>
+export const profileSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters"),
+  phone: z.string().regex(/^\d{10}$/, "Phone must be 10 digits"),
+})
+
+export type ProfileInput = z.infer<typeof profileSchema>
+
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>

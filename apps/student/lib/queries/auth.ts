@@ -1,5 +1,5 @@
-import { apiPost } from "@/lib/api"
-import type { LoginInput, RegisterInput } from "@/lib/schemas/auth"
+import { apiPost, apiPut } from "@/lib/api"
+import type { LoginInput, ProfileInput, RegisterInput } from "@/lib/schemas/auth"
 import type { AuthUser } from "@/store/auth"
 
 interface LoginResponse {
@@ -14,7 +14,7 @@ export const authQueries = {
     apiPost<LoginResponse>("auth/login", data),
 
   register: (data: RegisterInput) =>
-    apiPost<LoginResponse>("auth/register", data),
+    apiPost<MessageResponse>("auth/register", data),
 
   verifyEmail: (email: string, otp: string) =>
     apiPost<MessageResponse>("auth/verify-email", { email, otp }),
@@ -30,4 +30,7 @@ export const authQueries = {
 
   logout: () =>
     apiPost<MessageResponse>("auth/logout"),
+
+  updateProfile: (data: ProfileInput) =>
+    apiPut<{ success: boolean; user: AuthUser }>("me", data),
 }

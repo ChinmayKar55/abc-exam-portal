@@ -2,7 +2,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { Menu, X, GraduationCap, BookOpen, LayoutDashboard, Trophy, User, CreditCard, LogOut } from "lucide-react"
+import { Menu, X, BookOpen, LayoutDashboard, Trophy, User, CreditCard, LogOut } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useAuthStore } from "@/store/auth"
 import { authQueries } from "@/lib/queries/auth"
@@ -31,12 +31,11 @@ export function MobileNav() {
     <>
       {/* Mobile topbar */}
       <header className="lg:hidden fixed top-0 inset-x-0 z-50 flex h-14 items-center justify-between border-b border-[var(--border)] bg-[var(--card)] px-4">
-        <div className="flex items-center gap-2">
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg gradient-brand">
-            <GraduationCap className="h-3.5 w-3.5 text-white" />
-          </div>
-          <span className="font-bold text-sm">ABC Exam</span>
-        </div>
+        <a href="/home" className="flex items-center gap-2">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/osssc-logo.png" alt="OSSSC Online" className="h-8 w-7 object-contain drop-shadow-md shrink-0 translate-y-[1px]" />
+          <span className="font-extrabold text-slate-900 text-sm tracking-wide leading-tight whitespace-nowrap">OSSSC ONLINE</span>
+        </a>
         <button
           onClick={() => setOpen(true)}
           className="flex h-9 w-9 items-center justify-center rounded-lg hover:bg-[var(--secondary)]"
@@ -59,12 +58,11 @@ export function MobileNav() {
         open ? "translate-x-0" : "-translate-x-full"
       )}>
         <div className="flex h-14 items-center justify-between px-5 border-b border-[var(--sidebar-border)]">
-          <div className="flex items-center gap-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg gradient-brand">
-              <GraduationCap className="h-3.5 w-3.5 text-white" />
-            </div>
-            <span className="font-bold text-white text-sm">ABC Exam Portal</span>
-          </div>
+          <a href="/home" className="flex items-center gap-2">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/osssc-logo.png" alt="OSSSC Online" className="h-8 w-7 object-contain drop-shadow-md shrink-0 translate-y-[1px]" />
+            <span className="font-extrabold text-white text-sm tracking-wide leading-tight whitespace-nowrap">OSSSC ONLINE</span>
+          </a>
           <button onClick={() => setOpen(false)} className="text-[var(--sidebar-fg)] hover:text-white">
             <X className="h-5 w-5" />
           </button>

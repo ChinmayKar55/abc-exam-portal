@@ -1,7 +1,7 @@
 "use client"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { useState } from "react"
 import { Eye, EyeOff, Loader2 } from "lucide-react"
@@ -15,9 +15,11 @@ import { cn } from "@/lib/utils"
 
 export function LoginForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const setAuth = useAuthStore((s) => s.setAuth)
   const [showPw, setShowPw] = useState(false)
   const [serverError, setServerError] = useState("")
+  const justVerified = searchParams.get("verified") === "1"
 
   const {
     register,
@@ -33,7 +35,13 @@ export function LoginForm() {
       router.push("/home")
     } catch (err: unknown) {
       const msg = (err as { message?: string })?.message ?? "Login failed"
-      setServerError(msg.includes("401") || msg.includes("invalid") ? "Invalid email or password" : "Something went wrong")
+      if (msg.toLowerCase().includes("not verified")) {
+        setServerError("Please verify your email first. Check your inbox for the OTP.")
+      } else if (msg.includes("401") || msg.toLowerCase().includes("invalid")) {
+        setServerError("Invalid email or password")
+      } else {
+        setServerError("Something went wrong")
+      }
     }
   }
 
@@ -85,7 +93,13 @@ export function LoginForm() {
           {errors.password && <p className="text-xs text-[var(--destructive)]">{errors.password.message}</p>}
         </div>
 
-        {serverError && (
+        {justVerified && (
+        <p className="text-sm text-[color:var(--color-success-700)] bg-[color:var(--color-success-50)] border border-[color:var(--color-success-500)]/20 rounded-[var(--radius)] px-3 py-2">
+          Your email has been verified. Please log in.
+        </p>
+      )}
+
+      {serverError && (
           <p className="text-sm text-[var(--destructive)] bg-[color:var(--color-danger-50)] border border-[color:var(--color-danger-500)]/20 rounded-[var(--radius)] px-3 py-2">
             {serverError}
           </p>

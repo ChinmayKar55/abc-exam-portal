@@ -35,3 +35,45 @@ export function formatFileSize(bytes: number): string {
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
+
+/**
+ * Exit fullscreen in the current document and, if accessible, any parent
+ * documents (e.g. when the app is rendered inside an iframe preview).
+ */
+export async function exitFullscreen(): Promise<void> {
+  const exits: Promise<void>[] = []
+  let doc: Document | null = document
+
+  while (doc) {
+    if (doc.fullscreenElement) {
+      const d = doc as Document & {
+        webkitExitFullscreen?: () => Promise<void> | void
+        msExitFullscreen?: () => Promise<void> | void
+        mozCancelFullScreen?: () => Promise<void> | void
+      }
+      const fn =
+        doc.exitFullscreen ??
+        d.webkitExitFullscreen ??
+        d.mozCancelFullScreen ??
+        d.msExitFullscreen
+      if (fn) {
+        exits.push(
+          Promise.resolve()
+            .then(() => fn.call(doc))
+            .catch(() => {})
+        )
+      }
+    }
+
+    try {
+      const parentDoc = doc.defaultView?.parent?.document
+      if (!parentDoc || parentDoc === doc) break
+      doc = parentDoc
+    } catch {
+      // Cross-origin parent — stop traversal.
+      break
+    }
+  }
+
+  await Promise.all(exits)
+}

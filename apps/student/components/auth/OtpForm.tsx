@@ -81,6 +81,12 @@ export function OtpForm() {
           </p>
         )}
 
+        <div className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--muted)]/10 px-3 py-2.5 text-center text-xs leading-relaxed text-[var(--foreground)]">
+          <span className="font-bold uppercase">Check your spam/junk folder</span>
+          {" "}
+          if the OTP is not in your inbox. Mark the email as “Not Spam” to receive future messages.
+        </div>
+
         <Button type="submit" className="w-full" disabled={isSubmitting}>
           {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
           Verify email

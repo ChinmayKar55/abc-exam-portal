@@ -13,16 +13,18 @@ import { PageHeader } from "@/components/shared/PageHeader"
 import { examQueries } from "@/lib/queries/exams"
 import { planQueries } from "@/lib/queries/plans"
 
-const TYPE_FILTERS = ["all", "mock", "practice", "paid"] as const
+const TYPE_FILTERS = ["all", "mock", "practice"] as const
 
 export default function ExamsPage() {
   const [filter, setFilter] = useState<string>("all")
   const [search, setSearch] = useState("")
 
-  const { data: exams = [], isLoading } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ["exams", filter],
     queryFn: () => examQueries.list(filter === "all" ? undefined : filter),
   })
+
+  const exams = data ?? []
 
   const { data: myPlan } = useQuery({
     queryKey: ["my-plan"],

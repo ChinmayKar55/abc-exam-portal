@@ -35,26 +35,38 @@ func (m *Mailer) send(to, subject, body string) error {
 	return smtp.SendMail(addr, auth, m.cfg.Email.From, []string{to}, []byte(msg))
 }
 
+const brandName = "OSSSC Online"
+
 func (m *Mailer) SendOTP(to, name, otp string) error {
-	subject := "ABC Exam Portal — Verify Your Email"
-	body := fmt.Sprintf("Hi %s,\n\nYour OTP to verify your email is: %s\n\nThis code expires in 10 minutes.\n\nDo not share this code with anyone.\n\n— ABC Exam Portal", name, otp)
+	subject := brandName + " — Verify Your Email"
+	body := fmt.Sprintf(`Hi %s,
+
+Welcome to %s! Your one-time verification code is: %s
+
+This code expires in 10 minutes. Please do not share it with anyone.
+
+After verification, log in with your email and password to explore exam plans and start practising.
+
+Good luck!
+
+— %s`, name, brandName, otp, brandName)
 	return m.send(to, subject, body)
 }
 
 func (m *Mailer) SendPasswordReset(to, name, resetLink string) error {
-	subject := "ABC Exam Portal — Reset Your Password"
-	body := fmt.Sprintf("Hi %s,\n\nClick the link below to reset your password:\n%s\n\nThis link expires in 15 minutes.\n\nIf you did not request this, ignore this email.\n\n— ABC Exam Portal", name, resetLink)
+	subject := brandName + " — Reset Your Password"
+	body := fmt.Sprintf("Hi %s,\n\nClick the link below to reset your password:\n%s\n\nThis link expires in 15 minutes.\n\nIf you did not request this, ignore this email.\n\n— %s", name, resetLink, brandName)
 	return m.send(to, subject, body)
 }
 
 func (m *Mailer) SendWelcome(to, name string) error {
-	subject := "Welcome to ABC Exam Portal!"
-	body := fmt.Sprintf("Hi %s,\n\nYour account has been verified. You can now log in and purchase a plan to start practising.\n\nGood luck!\n\n— ABC Exam Portal", name)
+	subject := "Welcome to " + brandName + "!"
+	body := fmt.Sprintf("Hi %s,\n\nYour email has been verified. You can now log in and purchase a plan to start practising for your OSSSC exams.\n\nGood luck!\n\n— %s", name, brandName)
 	return m.send(to, subject, body)
 }
 
 func (m *Mailer) SendPlanActivation(to, name, planName string) error {
-	subject := "ABC Exam Portal — Plan Activated"
-	body := fmt.Sprintf("Hi %s,\n\nYour %s plan has been activated successfully. You now have full access to your exams.\n\nLog in to start: %s\n\n— ABC Exam Portal", name, planName, "http://localhost:3000/exams")
+	subject := brandName + " — Plan Activated"
+	body := fmt.Sprintf("Hi %s,\n\nYour %s plan has been activated successfully. You now have full access to your exams.\n\nLog in to start: %s\n\n— %s", name, planName, "http://localhost:3000/exams", brandName)
 	return m.send(to, subject, body)
 }

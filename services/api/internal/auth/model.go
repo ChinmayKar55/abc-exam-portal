@@ -28,6 +28,11 @@ type ResetPasswordRequest struct {
 	Password string `json:"password" validate:"required,min=8"`
 }
 
+type UpdateProfileRequest struct {
+	Name  string `json:"name"  validate:"required,min=2,max=100"`
+	Phone string `json:"phone" validate:"required,min=10,max=15"`
+}
+
 type TokenPair struct {
 	AccessToken  string `json:"access_token"`
 	RefreshToken string `json:"-"`

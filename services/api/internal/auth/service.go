@@ -19,12 +19,13 @@ import (
 )
 
 var (
-	ErrEmailExists        = errors.New("email already registered")
-	ErrUserNotFound       = errors.New("user not found")
-	ErrInvalidCredentials = errors.New("invalid email or password")
-	ErrEmailNotVerified   = errors.New("email not verified — check your inbox for the OTP")
-	ErrInvalidOTP         = errors.New("invalid or expired OTP")
-	ErrInvalidToken       = errors.New("invalid or expired token")
+	ErrEmailExists         = errors.New("email already registered")
+	ErrUserNotFound        = errors.New("user not found")
+	ErrInvalidCredentials  = errors.New("invalid email or password")
+	ErrEmailNotVerified    = errors.New("email not verified — check your inbox for the OTP")
+	ErrEmailAlreadyVerified = errors.New("email already verified")
+	ErrInvalidOTP          = errors.New("invalid or expired OTP")
+	ErrInvalidToken        = errors.New("invalid or expired token")
 )
 
 type Service struct {
@@ -38,62 +39,80 @@ func NewService(db *pgxpool.Pool, rdb *redis.Client, cfg *config.Config, mailer 
 	return &Service{db: db, rdb: rdb, cfg: cfg, mailer: mailer}
 }
 
-func (s *Service) Register(ctx context.Context, req RegisterRequest) (*TokenPair, *UserResponse, error) {
-	var exists bool
-	if err := s.db.QueryRow(ctx,
-		`SELECT EXISTS(SELECT 1 FROM users WHERE email = $1)`, req.Email,
-	).Scan(&exists); err != nil {
-		return nil, nil, fmt.Errorf("db error: %w", err)
+func (s *Service) Register(ctx context.Context, req RegisterRequest) error {
+	var existing struct {
+		ID            string
+		EmailVerified bool
 	}
-	if exists {
-		return nil, nil, ErrEmailExists
+	err := s.db.QueryRow(ctx,
+		`SELECT id, email_verified FROM users WHERE email = $1`, req.Email,
+	).Scan(&existing.ID, &existing.EmailVerified)
+	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+		return fmt.Errorf("db error: %w", err)
 	}
 
 	hash, err := bcrypt.GenerateFromPassword([]byte(req.Password), 12)
 	if err != nil {
-		return nil, nil, fmt.Errorf("hashing error: %w", err)
+		return fmt.Errorf("hashing error: %w", err)
 	}
 
-	var userID string
-	err = s.db.QueryRow(ctx,
-		`INSERT INTO users (name, email, phone, password_hash, role, email_verified)
-		 VALUES ($1, $2, $3, $4, 'student', true)
-		 RETURNING id`,
-		req.Name, req.Email, req.Phone, string(hash),
-	).Scan(&userID)
+	otp, err := generateOTP()
 	if err != nil {
-		return nil, nil, fmt.Errorf("insert error: %w", err)
+		return fmt.Errorf("otp generation error: %w", err)
+	}
+
+	if existing.ID != "" {
+		if existing.EmailVerified {
+			return ErrEmailExists
+		}
+		// Allow re-registering before verification: update name/phone/password and resend OTP.
+		_, err = s.db.Exec(ctx,
+			`UPDATE users SET name = $1, phone = $2, password_hash = $3 WHERE id = $4`,
+			req.Name, req.Phone, string(hash), existing.ID)
+		if err != nil {
+			return fmt.Errorf("update error: %w", err)
+		}
+	} else {
+		_, err = s.db.Exec(ctx,
+			`INSERT INTO users (name, email, phone, password_hash, role, email_verified)
+			 VALUES ($1, $2, $3, $4, 'student', false)`,
+			req.Name, req.Email, req.Phone, string(hash))
+		if err != nil {
+			return fmt.Errorf("insert error: %w", err)
+		}
+	}
+
+	if err := storeOTP(ctx, s.rdb, req.Email, otp); err != nil {
+		return fmt.Errorf("otp store error: %w", err)
 	}
 
 	go func() {
-		if err := s.mailer.SendWelcome(req.Email, req.Name); err != nil {
-			log.Error().Err(err).Str("email", req.Email).Msg("Failed to send welcome email")
+		if err := s.mailer.SendOTP(req.Email, req.Name, otp); err != nil {
+			log.Error().Err(err).Str("email", req.Email).Msg("Failed to send OTP email")
 		}
 	}()
 
-	return s.issueTokenPair(ctx, userID, "student", req.Email)
+	return nil
 }
 
-func (s *Service) VerifyEmail(ctx context.Context, req VerifyEmailRequest) (*TokenPair, *UserResponse, error) {
+func (s *Service) VerifyEmail(ctx context.Context, req VerifyEmailRequest) error {
 	valid, err := verifyOTP(ctx, s.rdb, req.Email, req.OTP)
 	if err != nil {
-		return nil, nil, fmt.Errorf("otp verify error: %w", err)
+		return fmt.Errorf("otp verify error: %w", err)
 	}
 	if !valid {
-		return nil, nil, ErrInvalidOTP
+		return ErrInvalidOTP
 	}
 
 	var user struct {
-		ID   string
 		Name string
-		Role string
 	}
 	err = s.db.QueryRow(ctx,
 		`UPDATE users SET email_verified = true WHERE email = $1
-		 RETURNING id, name, role`, req.Email,
-	).Scan(&user.ID, &user.Name, &user.Role)
+		 RETURNING name`, req.Email,
+	).Scan(&user.Name)
 	if err != nil {
-		return nil, nil, fmt.Errorf("update error: %w", err)
+		return fmt.Errorf("update error: %w", err)
 	}
 
 	go func() {
@@ -102,23 +121,59 @@ func (s *Service) VerifyEmail(ctx context.Context, req VerifyEmailRequest) (*Tok
 		}
 	}()
 
-	return s.issueTokenPair(ctx, user.ID, user.Role, req.Email)
+	return nil
+}
+
+func (s *Service) ResendOTP(ctx context.Context, email string) error {
+	var user struct {
+		Name          string
+		EmailVerified bool
+	}
+	err := s.db.QueryRow(ctx,
+		`SELECT name, email_verified FROM users WHERE email = $1`, email,
+	).Scan(&user.Name, &user.EmailVerified)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return ErrUserNotFound
+	}
+	if err != nil {
+		return fmt.Errorf("db error: %w", err)
+	}
+	if user.EmailVerified {
+		return ErrEmailAlreadyVerified
+	}
+
+	otp, err := generateOTP()
+	if err != nil {
+		return fmt.Errorf("otp generation error: %w", err)
+	}
+	if err := storeOTP(ctx, s.rdb, email, otp); err != nil {
+		return fmt.Errorf("otp store error: %w", err)
+	}
+
+	go func() {
+		if err := s.mailer.SendOTP(email, user.Name, otp); err != nil {
+			log.Error().Err(err).Str("email", email).Msg("Failed to resend OTP email")
+		}
+	}()
+
+	return nil
 }
 
 func (s *Service) Login(ctx context.Context, req LoginRequest) (*TokenPair, *UserResponse, error) {
 	var user struct {
-		ID           string
-		Name         string
-		Phone        string
-		PasswordHash string
-		Role         string
-		CreatedAt    time.Time
+		ID            string
+		Name          string
+		Phone         string
+		PasswordHash  string
+		Role          string
+		EmailVerified bool
+		CreatedAt     time.Time
 	}
 	err := s.db.QueryRow(ctx,
-		`SELECT id, name, phone, password_hash, role, created_at
+		`SELECT id, name, phone, password_hash, role, email_verified, created_at
 		 FROM users WHERE email = $1`, req.Email,
 	).Scan(&user.ID, &user.Name, &user.Phone, &user.PasswordHash,
-		&user.Role, &user.CreatedAt)
+		&user.Role, &user.EmailVerified, &user.CreatedAt)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil, ErrInvalidCredentials
 	}
@@ -128,6 +183,9 @@ func (s *Service) Login(ctx context.Context, req LoginRequest) (*TokenPair, *Use
 	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password)); err != nil {
 		return nil, nil, ErrInvalidCredentials
 	}
+	if !user.EmailVerified {
+		return nil, nil, ErrEmailNotVerified
+	}
 
 	tokens, userResp, err := s.issueTokenPair(ctx, user.ID, user.Role, req.Email)
 	if err != nil {
@@ -135,7 +193,7 @@ func (s *Service) Login(ctx context.Context, req LoginRequest) (*TokenPair, *Use
 	}
 	userResp.Name = user.Name
 	userResp.Phone = user.Phone
-	userResp.EmailVerified = true
+	userResp.EmailVerified = user.EmailVerified
 	userResp.CreatedAt = user.CreatedAt
 	return tokens, userResp, nil
 }
@@ -225,6 +283,21 @@ func (s *Service) ResetPassword(ctx context.Context, req ResetPasswordRequest) e
 	_, err = s.db.Exec(ctx,
 		`UPDATE users SET password_hash = $1 WHERE id = $2`, string(hash), userID)
 	return err
+}
+
+func (s *Service) UpdateProfile(ctx context.Context, userID string, req UpdateProfileRequest) (*UserResponse, error) {
+	var user UserResponse
+	err := s.db.QueryRow(ctx,
+		`UPDATE users
+		 SET name = $1, phone = $2
+		 WHERE id = $3
+		 RETURNING id, name, email, phone, role, email_verified, created_at`,
+		req.Name, req.Phone, userID,
+	).Scan(&user.ID, &user.Name, &user.Email, &user.Phone, &user.Role, &user.EmailVerified, &user.CreatedAt)
+	if err != nil {
+		return nil, fmt.Errorf("update profile error: %w", err)
+	}
+	return &user, nil
 }
 
 func (s *Service) issueTokenPair(ctx context.Context, userID, role, email string) (*TokenPair, *UserResponse, error) {

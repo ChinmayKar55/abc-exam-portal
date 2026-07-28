@@ -16,7 +16,7 @@ import { useExamWS } from "@/hooks/useExamWS"
 import { useProctoring } from "@/hooks/useProctoring"
 import { useWebcamProctor } from "@/hooks/useWebcamProctor"
 import { examQueries } from "@/lib/queries/exams"
-import { formatCountdown, cn } from "@/lib/utils"
+import { formatCountdown, cn, exitFullscreen } from "@/lib/utils"
 import type { StartResponse, ShuffledQuestion } from "@/lib/queries/exams"
 import {
   ViolationToast, FullscreenWarningModal, TerminationScreen, ProctoringBadge,
@@ -67,33 +67,21 @@ const OMRTimer = memo(function OMRTimer({
 
 // ─── Question Paper (left panel) ─────────────────────────────────────────────
 const QuestionPaper = memo(function QuestionPaper({
-  questions, answers, activeIdx, onQuestionVisible,
+  questions, answers, activeIdx,
 }: {
   questions: ShuffledQuestion[]
   answers: Record<string, string>
   activeIdx: number
-  onQuestionVisible: (idx: number) => void
 }) {
   const containerRef = useRef<HTMLDivElement>(null)
 
-  // IntersectionObserver — fires when a question enters the viewport
+  // Scroll the active question into view when it changes from a bubble click
   useEffect(() => {
     const container = containerRef.current
     if (!container) return
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            const idx = Number(entry.target.getAttribute("data-idx"))
-            if (!isNaN(idx)) onQuestionVisible(idx)
-          }
-        })
-      },
-      { root: container, threshold: 0.5 }
-    )
-    container.querySelectorAll("[data-idx]").forEach((el) => observer.observe(el))
-    return () => observer.disconnect()
-  }, [questions, onQuestionVisible])
+    const el = container.querySelector(`[data-idx="${activeIdx}"]`)
+    el?.scrollIntoView({ behavior: "smooth", block: "start" })
+  }, [activeIdx])
 
   return (
     <div ref={containerRef} className="h-full overflow-y-auto px-6 py-6 space-y-8 scroll-smooth">
@@ -397,12 +385,9 @@ interface OMRExamRoomProps {
   data: StartResponse
 }
 
-function exitFullscreenAndNavigate(path: string, push: (p: string) => void) {
-  if (document.fullscreenElement) {
-    document.exitFullscreen().catch(() => {}).finally(() => push(path))
-  } else {
-    push(path)
-  }
+async function exitFullscreenAndNavigate(path: string, push: (p: string) => void) {
+  await exitFullscreen()
+  push(path)
 }
 
 export function OMRExamRoom({ data }: OMRExamRoomProps) {
@@ -415,6 +400,7 @@ export function OMRExamRoom({ data }: OMRExamRoomProps) {
   const [webcamEnabled, setWebcamEnabled] = useState(false)
   const [fullscreenCountdown, setFullscreenCountdown] = useState(0)
   const [dismissedViolationId, setDismissedViolationId] = useState<string | null>(null)
+  const [proctoringEnabled, setProctoringEnabled] = useState(true)
   const submittingRef = useRef(false)
   const fsCountdownRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
@@ -450,7 +436,7 @@ export function OMRExamRoom({ data }: OMRExamRoomProps) {
   // Proctoring hook
   const proctoring = useProctoring({
     attemptId: data.attempt_id,
-    enabled: true,
+    enabled: proctoringEnabled,
     autoTerminateAt: 3,
     onReport: (type, severity, meta) => reportProctoring(type, severity, meta),
     onTerminate: handleTerminate,
@@ -500,22 +486,21 @@ export function OMRExamRoom({ data }: OMRExamRoomProps) {
   const handleSubmitConfirmed = useCallback(async () => {
     if (submittingRef.current) return
     submittingRef.current = true
+    // Stop proctoring listeners before exiting fullscreen so the intentional
+    // submit is not recorded as a fullscreen-exit violation.
+    setProctoringEnabled(false)
+    // Exit fullscreen while the submit-button click gesture is still valid.
+    await exitFullscreen()
     setConfirmOpen(false)
     dispatch({ type: "SUBMIT" })
     try { await examQueries.submit(data.attempt_id) } catch { /* WS handles it */ }
-    exitFullscreenAndNavigate(`/results/${data.attempt_id}`, router.push)
+    router.push(`/results/${data.attempt_id}`)
   }, [data.attempt_id, router])
-
-  const scrollPaperToQuestion = useCallback((idx: number) => {
-    const el = document.getElementById(`omr-q-${idx}`)
-    el?.scrollIntoView({ behavior: "smooth", block: "start" })
-  }, [])
 
   const handleBubbleClickWithScroll = useCallback((questionId: string, answer: string, idx: number) => {
     handleBubbleClick(questionId, answer, idx)
-    scrollPaperToQuestion(idx)
     setMobileTab("paper")
-  }, [handleBubbleClick, scrollPaperToQuestion])
+  }, [handleBubbleClick])
 
   const answeredCount = Object.keys(state.answers).length
   const total = data.questions.length
@@ -636,7 +621,6 @@ export function OMRExamRoom({ data }: OMRExamRoomProps) {
             questions={data.questions}
             answers={state.answers}
             activeIdx={activeIdx}
-            onQuestionVisible={setActiveIdx}
           />
         </div>
 

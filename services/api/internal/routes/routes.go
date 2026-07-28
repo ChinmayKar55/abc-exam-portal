@@ -63,6 +63,7 @@ func Register(app *fiber.App, db *pgxpool.Pool, rdb *redis.Client, cfg *config.C
 			"user":    fiber.Map{"id": auth.GetUserID(c), "role": auth.GetRole(c)},
 		})
 	})
+	me.Put("/", authHandler.UpdateProfile)
 
 	// Payment provider
 	var provider payment.Provider

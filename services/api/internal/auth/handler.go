@@ -33,29 +33,38 @@ func (h *Handler) Register(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 
-	tokens, user, err := h.svc.Register(c.Context(), req)
-	if err != nil {
+	if err := h.svc.Register(c.Context(), req); err != nil {
 		if errors.Is(err, ErrEmailExists) {
 			return fiber.NewError(fiber.StatusConflict, err.Error())
 		}
 		return err
 	}
 
-	h.setRefreshCookie(c, tokens.RefreshToken)
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
-		"success":      true,
-		"access_token": tokens.AccessToken,
-		"expires_in":   tokens.ExpiresIn,
-		"user":         user,
+		"success": true,
+		"message": "A verification code has been sent to your email. Please verify to continue.",
 	})
 }
 
-// VerifyEmail is no longer required — email verification is automatic on registration.
-// This endpoint is kept for backward-compat and always returns 410 Gone.
 func (h *Handler) VerifyEmail(c *fiber.Ctx) error {
-	return c.Status(fiber.StatusGone).JSON(fiber.Map{
-		"success": false,
-		"message": "Email verification is no longer required. Please log in directly.",
+	var req VerifyEmailRequest
+	if err := c.BodyParser(&req); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, "invalid request body")
+	}
+	if err := validate(req); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+	}
+
+	if err := h.svc.VerifyEmail(c.Context(), req); err != nil {
+		if errors.Is(err, ErrInvalidOTP) {
+			return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		}
+		return err
+	}
+
+	return c.JSON(fiber.Map{
+		"success": true,
+		"message": "Email verified successfully. You can now log in.",
 	})
 }
 
@@ -164,12 +173,48 @@ func (h *Handler) ResetPassword(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{"success": true, "message": "Password reset successful. You can now log in."})
 }
 
-// ResendOTP is no longer required — email verification is automatic on registration.
-// This endpoint is kept for backward-compat and always returns 410 Gone.
+func (h *Handler) UpdateProfile(c *fiber.Ctx) error {
+	var req UpdateProfileRequest
+	if err := c.BodyParser(&req); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, "invalid request body")
+	}
+	if err := validate(req); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+	}
+
+	user, err := h.svc.UpdateProfile(c.Context(), GetUserID(c), req)
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(fiber.Map{"success": true, "user": user})
+}
+
 func (h *Handler) ResendOTP(c *fiber.Ctx) error {
-	return c.Status(fiber.StatusGone).JSON(fiber.Map{
-		"success": false,
-		"message": "Email verification is no longer required. Please log in directly.",
+	type request struct {
+		Email string `json:"email"`
+	}
+	var req request
+	if err := c.BodyParser(&req); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, "invalid request body")
+	}
+	if req.Email == "" {
+		return fiber.NewError(fiber.StatusBadRequest, "email is required")
+	}
+
+	if err := h.svc.ResendOTP(c.Context(), req.Email); err != nil {
+		switch {
+		case errors.Is(err, ErrUserNotFound):
+			return fiber.NewError(fiber.StatusNotFound, err.Error())
+		case errors.Is(err, ErrEmailAlreadyVerified):
+			return fiber.NewError(fiber.StatusConflict, err.Error())
+		}
+		return err
+	}
+
+	return c.JSON(fiber.Map{
+		"success": true,
+		"message": "A new verification code has been sent to your email.",
 	})
 }
 

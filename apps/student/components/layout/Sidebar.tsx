@@ -30,16 +30,15 @@ export function Sidebar() {
   return (
     <aside className="fixed inset-y-0 left-0 z-40 flex w-60 flex-col bg-[var(--sidebar-bg)] border-r border-[var(--sidebar-border)]">
       {/* Logo */}
-      <div className="flex h-16 items-center gap-1 px-3 border-b border-[var(--sidebar-border)]">
+      <a href="/home" className="flex h-16 items-center gap-2 px-3 border-b border-[var(--sidebar-border)]">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/osssc-logo.png"
           alt="OSSSC Online"
-          style={{ width: 56, height: 56, minWidth: 56 }}
-          className="object-contain"
+          className="h-20 w-15 object-contain drop-shadow-md shrink-0 translate-y-[7px]"
         />
-        <span className="font-extrabold text-white text-[14px] tracking-wide leading-tight">OSSSC ONLINE</span>
-      </div>
+        <span className="font-extrabold text-white text-sm tracking-wide leading-tight whitespace-nowrap">OSSSC ONLINE</span>
+      </a>
 
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-0.5">

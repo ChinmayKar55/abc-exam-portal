@@ -4,8 +4,10 @@ import { useState, useEffect, useRef } from "react"
 import {
   ArrowRight, CheckCircle2, ChevronDown, Star, Users, BookOpen,
   Award, Shield, BarChart3, Clock, Menu, X, Zap, Target, TrendingUp,
-  Brain, FileText, MonitorSmartphone
+  Brain, FileText, MonitorSmartphone, Bell, MapPin,
+  Mail, Phone
 } from "lucide-react"
+import { FaFacebookF, FaInstagram, FaRedditAlien, FaWhatsapp } from "react-icons/fa"
 
 // ─── colour palette (sky-blue theme) ───────────────────────────────────────
 // Primary: #0284c7 (sky-600)   Accent: #0ea5e9 (sky-500)
@@ -48,21 +50,21 @@ function Navbar() {
       "fixed top-0 inset-x-0 z-50 transition-all duration-300",
       scrolled ? "bg-white/95 backdrop-blur-md shadow-sm border-b border-sky-100" : "bg-transparent"
     )}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-20">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-24">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2">
+        <a href="/" className="flex items-center gap-2 lg:gap-3 shrink-0">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/osssc-logo.png" alt="OSSSC Online" className="h-14 w-14 object-contain drop-shadow-md" />
-          <span className={cn("font-extrabold text-lg tracking-widest leading-tight", scrolled ? "text-sky-900" : "text-white")}>
+          <img src="/osssc-logo.png" alt="OSSSC Online" className="h-27 w-22 object-contain drop-shadow-md shrink-0 translate-y-[9px]" />
+          <span className={cn("font-extrabold text-lg lg:text-xl tracking-widest leading-tight whitespace-nowrap", scrolled ? "text-sky-900" : "text-white")}>
             OSSSC ONLINE
           </span>
-        </Link>
+        </a>
 
         {/* Desktop links */}
-        <div className="hidden md:flex items-center gap-8">
+        <div className="hidden md:flex items-center gap-4 lg:gap-8 shrink-0">
           {["Exams", "Plans", "About"].map((item) => (
             <a key={item} href={`#${item.toLowerCase()}`}
-              className={cn("text-sm font-medium transition-colors hover:text-sky-400",
+              className={cn("text-sm font-medium transition-colors hover:text-sky-400 whitespace-nowrap",
                 scrolled ? "text-slate-700" : "text-white/90"
               )}>
               {item}
@@ -71,15 +73,15 @@ function Navbar() {
         </div>
 
         {/* CTAs */}
-        <div className="hidden md:flex items-center gap-3">
+        <div className="hidden md:flex items-center gap-2 lg:gap-3 shrink-0">
           <Link href="/login"
-            className={cn("text-sm font-semibold px-4 py-2 rounded-lg transition-colors",
+            className={cn("text-sm font-semibold px-3 lg:px-4 py-2 rounded-lg transition-colors whitespace-nowrap",
               scrolled ? "text-sky-700 hover:bg-sky-50" : "text-white/90 hover:text-white"
             )}>
             Sign In
           </Link>
           <Link href="/register"
-            className="text-sm font-semibold px-4 py-2 rounded-lg bg-sky-500 hover:bg-sky-600 text-white transition-colors shadow-md">
+            className="text-sm font-semibold px-3 lg:px-4 py-2 rounded-lg bg-sky-500 hover:bg-sky-600 text-white transition-colors shadow-md whitespace-nowrap">
             Start Free →
           </Link>
         </div>
@@ -132,7 +134,7 @@ function Hero() {
           <h1 className="text-5xl sm:text-6xl font-extrabold text-white leading-[1.1] tracking-tight">
             Crack Your{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-400 to-cyan-300">
-              OSSSC Exam
+              OSSSC Nursing Exam
             </span>{" "}
             With Confidence
           </h1>
@@ -373,7 +375,7 @@ function Features() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
           <span className="inline-block bg-sky-100 text-sky-700 text-xs font-bold px-3 py-1 rounded-full mb-4 uppercase tracking-wider">Platform Features</span>
-          <h2 className="text-4xl font-extrabold text-slate-900">Everything You Need to Clear OSSSC</h2>
+          <h2 className="text-4xl font-extrabold text-slate-900">Everything You Need to Clear OSSSC Nursing</h2>
           <p className="mt-4 text-slate-500 text-lg max-w-2xl mx-auto">
             Not just question banks. A complete preparation ecosystem built around how the OSSSC exam actually works.
           </p>
@@ -577,6 +579,128 @@ function Plans() {
   )
 }
 
+// ─── ABOUT ────────────────────────────────────────────────────────────────────
+const ABOUT_OFFERINGS = [
+  {
+    icon: MonitorSmartphone,
+    title: "Live-Alike Mock Test Environment",
+    desc: "Developed in-house by ABC Skills, our proprietary mock test platform replicates the actual OSSSC exam interface, timing, and pressure conditions. This means you don't just practice the content — you practice the real experience: the same clock pressure, the same screen flow, the same exam-day feel. No surprises, no unfamiliar interfaces, no last-minute panic.",
+  },
+  {
+    icon: FileText,
+    title: "Free & Premium Mock Tests",
+    desc: "Meticulously designed to mirror the actual OSSSC exam pattern, difficulty level, and time constraints, so you walk in on exam day feeling like you've already done this before — because you have.",
+  },
+  {
+    icon: Award,
+    title: "Questions Crafted by Industry Leaders",
+    desc: "Our question banks are developed with input from experienced medical and nursing professionals who understand both the clinical realities of practice and the specific demands of the OSSSC syllabus. Every question is reviewed for accuracy, relevance, and alignment with current exam trends.",
+  },
+  {
+    icon: BookOpen,
+    title: "Comprehensive Subject-Wise Practice",
+    desc: "In-depth coverage across Nursing Foundation, Medical-Surgical Nursing, Community Health Nursing, Child Health Nursing, Mental Health Nursing, Midwifery, and more — organized so you can strengthen weak areas systematically rather than studying randomly.",
+  },
+  {
+    icon: MapPin,
+    title: "Odisha-Specific General Knowledge & Current Affairs",
+    desc: "Curated updates on state government schemes, health policies, and current affairs most likely to appear in OSSSC exams — content that generic national-level prep platforms simply don't offer.",
+  },
+  {
+    icon: BarChart3,
+    title: "Performance Analytics & Tracking",
+    desc: "Detailed insights into your test performance, topic-wise accuracy, time management, and improvement trends, so your preparation is data-driven, not guesswork.",
+  },
+  {
+    icon: Bell,
+    title: "Timely Exam Updates & Notifications",
+    desc: "Stay informed on exam dates, application deadlines, syllabus changes, and recruitment notifications, so you never miss a critical update in your preparation timeline.",
+  },
+]
+
+function AboutUs() {
+  return (
+    <section id="about" className="py-24 bg-[#f0f9ff]">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center mb-16">
+          <span className="inline-block bg-sky-100 text-sky-700 text-xs font-bold px-3 py-1 rounded-full mb-4 uppercase tracking-wider">About OSSSC.Online</span>
+          <h2 className="text-4xl font-extrabold text-slate-900">Your Trusted Partner for OSSSC Nursing Officer Success</h2>
+          <p className="mt-4 text-slate-500 text-lg max-w-3xl mx-auto">
+            An Initiative by ABC Skills — Empowering Experienced Nursing Professionals Across Odisha to Achieve Their Government Career Goals
+          </p>
+        </div>
+
+        <div className="grid lg:grid-cols-2 gap-12 items-start">
+          <div className="space-y-6">
+            <p className="text-slate-600 leading-relaxed">
+              OSSSC.Online is an initiative by ABC Skills, born out of a simple but powerful idea — that experienced, hardworking nursing professionals deserve a preparation platform built specifically for them, not a generic one-size-fits-all exam portal.
+            </p>
+            <p className="text-slate-600 leading-relaxed">
+              We know your journey hasn't been easy. You've completed your GNM or Nursing graduation, spent years on hospital floors, in wards, in emergency rooms and community health centers, building real clinical experience through long shifts and demanding responsibilities. Now, you're ready for the next chapter — a secure, respected, and impactful government nursing career through the OSSSC Nursing Officer recruitment exam. And that's precisely where OSSSC.Online steps in, as your dedicated partner for this final stretch of preparation.
+            </p>
+
+            <div className="bg-white rounded-2xl border border-sky-100 p-6 shadow-sm">
+              <h3 className="text-xl font-bold text-slate-900 mb-3">Backed by ABC Skills' Expertise</h3>
+              <p className="text-sm text-slate-500 leading-relaxed">
+                As an initiative of ABC Skills — a trusted name in medical and nursing skills training — OSSSC.Online brings the same institutional rigor, clinical understanding, and training expertise into a focused exam-prep platform. This isn't a side project built by outsiders guessing at what nurses need; it's built by an organization already immersed in medical and nursing education.
+              </p>
+            </div>
+
+            <div className="bg-white rounded-2xl border border-sky-100 p-6 shadow-sm">
+              <h3 className="text-xl font-bold text-slate-900 mb-3">Our Philosophy</h3>
+              <p className="text-sm text-slate-500 leading-relaxed">
+                We believe that experienced nursing professionals — the ones who've already proven their dedication through years of clinical service — deserve preparation resources that respect their time, their intelligence, and their expertise. That's why we don't just throw generic questions at you. We build a genuine bridge between your real-world clinical knowledge and the specific way that knowledge is tested in the OSSSC examination format — backed by technology that makes practice feel like the real thing.
+              </p>
+            </div>
+
+            <div className="bg-white rounded-2xl border border-sky-100 p-6 shadow-sm">
+              <h3 className="text-xl font-bold text-slate-900 mb-3">Our Community</h3>
+              <p className="text-sm text-slate-500 leading-relaxed">
+                OSSSC.Online isn't just a website — it's a growing community of nursing professionals across Odisha, all working toward the same goal: securing a stable, respected, and fulfilling career in government healthcare service. Backed by ABC Skills, we're building a support system of educators, past candidates, and healthcare professionals who genuinely understand what you're going through.
+              </p>
+            </div>
+
+            <div className="bg-white rounded-2xl border border-sky-100 p-6 shadow-sm">
+              <h3 className="text-xl font-bold text-slate-900 mb-3">Our Commitment to You</h3>
+              <p className="text-sm text-slate-500 leading-relaxed">
+                Every feature on this platform, every mock test, and every piece of content exists for one reason: to help you convert years of clinical dedication into exam-day success. We're not here to sell you generic content. We're here to help you get the government nursing job you've worked so hard to earn.
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-8">
+            <div className="bg-gradient-to-br from-sky-600 to-cyan-600 rounded-3xl p-8 text-white">
+              <h3 className="text-2xl font-bold mb-4">What Makes Us Different</h3>
+              <p className="text-sky-100 leading-relaxed">
+                Unlike generic test-prep platforms, everything at OSSSC.Online is built around the specific needs of experienced nursing candidates preparing for Odisha's state recruitment process. We've combined subject-matter depth with exam-specific strategy — and real technology — to give you the sharpest possible edge.
+              </p>
+            </div>
+
+            <div>
+              <h3 className="text-2xl font-bold text-slate-900 mb-6">Our Core Offerings</h3>
+              <div className="grid sm:grid-cols-2 gap-4">
+                {ABOUT_OFFERINGS.map(({ icon: Icon, title, desc }) => (
+                  <div key={title} className="bg-white rounded-2xl border border-sky-100 p-5 shadow-sm hover:shadow-md transition-shadow">
+                    <div className="h-10 w-10 rounded-xl bg-sky-50 flex items-center justify-center mb-3">
+                      <Icon className="h-5 w-5 text-sky-600" />
+                    </div>
+                    <h4 className="text-base font-bold text-slate-900 mb-2">{title}</h4>
+                    <p className="text-sm text-slate-500 leading-relaxed">{desc}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <p className="text-center mt-16 text-lg font-semibold text-slate-900">
+          OSSSC.Online — An ABC Skills Initiative. Prepare Smart. Serve Odisha.
+        </p>
+      </div>
+    </section>
+  )
+}
+
 // ─── FAQ ────────────────────────────────────────────────────────────────────
 const FAQS = [
   { q: "Who is OSSSC Online for?", a: "OSSSC Online is designed for candidates preparing for Odisha Staff Selection Commission exams — primarily Nursing Officer, Staff Nurse, Paramedical and Allied Health posts notified by the OSSSC." },
@@ -590,7 +714,7 @@ const FAQS = [
 function FAQ() {
   const [open, setOpen] = useState<number | null>(null)
   return (
-    <section id="about" className="py-24 bg-[#f0f9ff]">
+    <section id="faq" className="py-24 bg-white">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
           <span className="inline-block bg-sky-100 text-sky-700 text-xs font-bold px-3 py-1 rounded-full mb-4 uppercase tracking-wider">FAQ</span>
@@ -654,53 +778,542 @@ function CTABanner() {
 
 // ─── FOOTER ─────────────────────────────────────────────────────────────────
 function Footer() {
+  const quickLinks = [
+    { label: "Home", href: "/" },
+    { label: "Mock Tests", href: "#exams" },
+    { label: "Study Material", href: "#features" },
+    { label: "Current Affairs", href: "#about" },
+    { label: "About Us", href: "#about" },
+    { label: "Contact Us", href: "mailto:abcsupportindia@gmail.com" },
+  ]
+
+  const [openPolicy, setOpenPolicy] = useState<"terms" | "privacy" | "refund" | null>(null)
+
+  const legalLinks = [
+    { label: "Privacy Policy", policy: "privacy" as const },
+    { label: "Terms & Conditions", policy: "terms" as const },
+    { label: "Refund Policy", policy: "refund" as const },
+  ]
+
+  const socialLinks = [
+    { icon: FaInstagram, label: "Instagram", href: "https://www.instagram.com/osssc.online" },
+    { icon: FaFacebookF, label: "Facebook", href: "https://www.facebook.com/profile.php?id=61592002637897" },
+    { icon: FaRedditAlien, label: "Reddit", href: "https://www.reddit.com/r/OSSSC_ONLINE/" },
+    { icon: FaWhatsapp, label: "WhatsApp", href: "https://wa.me/918984858895" },
+  ]
+
   return (
+    <>
     <footer className="bg-[#0c1a2e] text-slate-400">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="grid md:grid-cols-4 gap-12">
-          <div className="md:col-span-2 space-y-4">
+        <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-12">
+          {/* Brand */}
+          <div className="lg:col-span-2 space-y-5">
             <div className="flex items-center gap-2">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/osssc-logo.png" alt="OSSSC Online" className="h-9 w-9 object-contain" />
-              <span className="font-extrabold text-white text-sm tracking-wide">OSSSC ONLINE</span>
+              <img src="/osssc-logo.png" alt="OSSSC Online" className="h-10 w-10 object-contain" />
+              <div>
+                <span className="block font-extrabold text-white text-sm tracking-wide">OSSSC.Online</span>
+                <span className="block text-xs text-sky-400">An Initiative by ABC Skills</span>
+              </div>
             </div>
-            <p className="text-sm leading-relaxed max-w-xs">
-              India&apos;s most trusted exam preparation platform for OSSSC Nursing Officer, Paramedical and Allied Health aspirants.
-            </p>
-            <p className="text-xs text-slate-600">
-              Not affiliated with Odisha Staff Selection Commission. Practice platform only.
+            <p className="text-sm leading-relaxed max-w-sm">
+              Empowering experienced GNM and Nursing graduates across Odisha to succeed in the OSSSC Nursing Officer recruitment exam through live-alike mock tests, expert-curated questions, and focused preparation resources.
             </p>
           </div>
 
+          {/* Quick Links */}
           <div>
-            <p className="text-white font-semibold text-sm mb-4">Platform</p>
+            <p className="text-white font-semibold text-sm mb-4">Quick Links</p>
             <ul className="space-y-2.5 text-sm">
-              {["Mock Tests", "OMR Practice", "Performance Analytics", "Study Plans", "Result History"].map((l) => (
-                <li key={l}><Link href="/login" className="hover:text-sky-400 transition-colors">{l}</Link></li>
+              {quickLinks.map((link) => (
+                <li key={link.label}>
+                  {link.href.startsWith("http") || link.href.startsWith("mailto:") ? (
+                    <a href={link.href} className="hover:text-sky-400 transition-colors">{link.label}</a>
+                  ) : (
+                    <Link href={link.href} className="hover:text-sky-400 transition-colors">{link.label}</Link>
+                  )}
+                </li>
               ))}
             </ul>
           </div>
 
+          {/* Legal */}
           <div>
-            <p className="text-white font-semibold text-sm mb-4">Exam Series</p>
+            <p className="text-white font-semibold text-sm mb-4">Legal</p>
             <ul className="space-y-2.5 text-sm">
-              {["Nursing Officer", "Staff Nurse", "Lab Technician", "Physiotherapy", "Pharmacy", "Health Inspector"].map((l) => (
-                <li key={l}><Link href="/register" className="hover:text-sky-400 transition-colors">{l}</Link></li>
+              {legalLinks.map((link) => (
+                <li key={link.label}>
+                  <button
+                    onClick={() => setOpenPolicy(link.policy)}
+                    className="hover:text-sky-400 transition-colors text-left"
+                  >
+                    {link.label}
+                  </button>
+                </li>
               ))}
             </ul>
+          </div>
+
+          {/* Contact + Social */}
+          <div className="space-y-6">
+            <div>
+              <p className="text-white font-semibold text-sm mb-4">Get in Touch</p>
+              <ul className="space-y-3 text-sm">
+                <li className="flex items-start gap-3">
+                  <MapPin className="h-4 w-4 text-sky-400 shrink-0 mt-0.5" />
+                  <span>Bhubaneswar, Odisha</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <Mail className="h-4 w-4 text-sky-400 shrink-0 mt-0.5" />
+                  <a href="mailto:abcsupportindia@gmail.com" className="hover:text-sky-400 transition-colors break-all">
+                    abcsupportindia@gmail.com
+                  </a>
+                </li>
+                <li className="flex items-start gap-3">
+                  <Phone className="h-4 w-4 text-sky-400 shrink-0 mt-0.5" />
+                  <div>
+                    <a href="tel:+918984858895" className="hover:text-sky-400 transition-colors">
+                      +91 89848 58895
+                    </a>
+                    <p className="text-xs text-slate-500 mt-0.5">Registered contact no. & WhatsApp</p>
+                  </div>
+                </li>
+              </ul>
+            </div>
+
+            <div>
+              <p className="text-white font-semibold text-sm mb-3">Follow Us</p>
+              <div className="flex flex-wrap gap-3">
+                {socialLinks.map(({ icon: Icon, label, href }) => (
+                  <a
+                    key={label}
+                    href={href}
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label={label}
+                    className="h-10 w-10 rounded-full bg-white/5 hover:bg-sky-600/20 flex items-center justify-center text-slate-300 hover:text-white transition-colors"
+                  >
+                    <Icon className="h-5 w-5" />
+                  </a>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
 
         <div className="border-t border-white/5 mt-12 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-600">
-          <p>© {new Date().getFullYear()} OSSSC Online. All rights reserved.</p>
-          <div className="flex gap-6">
-            <a href="#" className="hover:text-sky-400 transition-colors">Privacy Policy</a>
-            <a href="#" className="hover:text-sky-400 transition-colors">Terms of Service</a>
-            <a href="#" className="hover:text-sky-400 transition-colors">Contact Us</a>
-          </div>
+          <p>© 2026 OSSSC.Online, an initiative by ABC Skills. All Rights Reserved.</p>
+          <p className="text-xs text-slate-600">Not affiliated with Odisha Staff Selection Commission. Practice platform only.</p>
         </div>
       </div>
     </footer>
+    <PolicyModal type={openPolicy} onClose={() => setOpenPolicy(null)} />
+    </>
+  )
+}
+
+// ─── POLICY MODAL & CONTENT ───────────────────────────────────────────────
+type PolicyType = "terms" | "privacy" | "refund"
+
+function PolicyModal({ type, onClose }: { type: PolicyType | null; onClose: () => void }) {
+  if (!type) return null
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+      role="dialog"
+      aria-modal="true"
+    >
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto relative">
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 p-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors"
+          aria-label="Close"
+        >
+          <X className="h-5 w-5" />
+        </button>
+        <div className="p-8 pt-14">
+          {type === "terms" && <TermsContent />}
+          {type === "privacy" && <PrivacyContent />}
+          {type === "refund" && <RefundContent />}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function TermsContent() {
+  return (
+    <div className="space-y-6 text-slate-600 leading-relaxed">
+      <div>
+        <h2 className="text-2xl font-extrabold text-slate-900">Terms & Conditions</h2>
+        <p className="text-sm text-slate-500 mt-1">Last Updated: July 27, 2026</p>
+      </div>
+      <p>
+        Welcome to OSSSC.Online, an initiative by ABC Skills. These Terms & Conditions (&quot;Terms&quot;) govern your access to and use of the OSSSC.Online website, mobile platform, mock tests, study materials, and related services (collectively, the &quot;Platform&quot;). By accessing or using the Platform, you agree to be bound by these Terms. If you do not agree, please do not use the Platform.
+      </p>
+
+      <section className="space-y-2">
+        <h3 className="font-bold text-slate-900">1. Eligibility</h3>
+        <p>
+          The Platform is intended for use by GNM and Nursing graduates with relevant work experience who are preparing for the OSSSC Nursing Officer recruitment examination or similar government nursing recruitment exams. By using the Platform, you confirm that the information you provide (including educational qualifications and experience) is accurate and truthful.
+        </p>
+      </section>
+
+      <section className="space-y-2">
+        <h3 className="font-bold text-slate-900">2. Account Registration</h3>
+        <ul className="list-disc pl-5 space-y-1">
+          <li>You may be required to create an account using your email address or phone number to access certain features.</li>
+          <li>You are responsible for maintaining the confidentiality of your login credentials and for all activities that occur under your account.</li>
+          <li>You must notify us immediately of any unauthorized use of your account.</li>
+          <li>We reserve the right to suspend or terminate accounts that provide false information or violate these Terms.</li>
+        </ul>
+      </section>
+
+      <section className="space-y-2">
+        <h3 className="font-bold text-slate-900">3. Services Provided</h3>
+        <p>OSSSC.Online offers:</p>
+        <ul className="list-disc pl-5 space-y-1">
+          <li>Free and premium mock tests designed to simulate the OSSSC exam pattern</li>
+          <li>A live-alike mock test environment developed by ABC Skills</li>
+          <li>Subject-wise practice questions and study materials</li>
+          <li>Odisha-specific general knowledge and current affairs content</li>
+          <li>Performance tracking and analytics</li>
+          <li>Exam notifications and updates</li>
+        </ul>
+        <p>
+          We make reasonable efforts to ensure the accuracy and relevance of our content but do not guarantee that our materials cover every topic that may appear in the actual OSSSC examination.
+        </p>
+      </section>
+
+      <section className="space-y-2">
+        <h3 className="font-bold text-slate-900">4. No Guarantee of Exam Results</h3>
+        <p>
+          While our mock tests, questions, and study materials are curated with input from experienced medical and nursing professionals, OSSSC.Online does not guarantee selection, qualification, or any specific score in the OSSSC Nursing Officer exam or any other examination. Success depends on multiple factors, including individual preparation, and is solely the responsibility of the candidate.
+        </p>
+      </section>
+
+      <section className="space-y-2">
+        <h3 className="font-bold text-slate-900">5. Payments and Subscriptions</h3>
+        <ul className="list-disc pl-5 space-y-1">
+          <li>Certain features (premium mock tests, advanced study materials, etc.) may require payment of applicable fees.</li>
+          <li>All fees are stated in Indian Rupees (INR) unless otherwise specified.</li>
+          <li>Payments must be made through the payment methods supported on the Platform.</li>
+          <li>Prices, plans, and features are subject to change at our discretion, with prior notice where reasonably possible.</li>
+        </ul>
+      </section>
+
+      <section className="space-y-2">
+        <h3 className="font-bold text-slate-900">6. Refund Policy</h3>
+        <p>
+          Refunds, where applicable, are governed by our separate Refund Policy. Please refer to that page for details on eligibility and process.
+        </p>
+      </section>
+
+      <section className="space-y-2">
+        <h3 className="font-bold text-slate-900">7. User Conduct</h3>
+        <p>You agree not to:</p>
+        <ul className="list-disc pl-5 space-y-1">
+          <li>Share, resell, or redistribute paid content, mock tests, or study materials without authorization</li>
+          <li>Use automated tools, bots, or scripts to access or scrape content from the Platform</li>
+          <li>Attempt to reverse-engineer, copy, or replicate the mock test environment or question banks</li>
+          <li>Engage in any activity that disrupts or interferes with the Platform&apos;s functioning</li>
+          <li>Impersonate any person or entity, or misrepresent your affiliation</li>
+        </ul>
+      </section>
+
+      <section className="space-y-2">
+        <h3 className="font-bold text-slate-900">8. Intellectual Property</h3>
+        <p>
+          All content on the Platform — including but not limited to questions, mock tests, study materials, the live-alike test environment, graphics, logos, and text — is the intellectual property of ABC Skills / OSSSC.Online and is protected under applicable copyright and intellectual property laws. Unauthorized reproduction, distribution, or commercial use of this content is strictly prohibited.
+        </p>
+      </section>
+
+      <section className="space-y-2">
+        <h3 className="font-bold text-slate-900">9. Third-Party Links</h3>
+        <p>
+          The Platform may contain links to third-party websites or resources. We are not responsible for the content, accuracy, or practices of any third-party sites, and inclusion of such links does not imply endorsement.
+        </p>
+      </section>
+
+      <section className="space-y-2">
+        <h3 className="font-bold text-slate-900">10. Limitation of Liability</h3>
+        <p>
+          To the maximum extent permitted by law, OSSSC.Online and ABC Skills shall not be liable for any direct, indirect, incidental, or consequential damages arising from your use of, or inability to use, the Platform, including but not limited to exam performance, technical errors, or data loss.
+        </p>
+      </section>
+
+      <section className="space-y-2">
+        <h3 className="font-bold text-slate-900">11. Accuracy of Content & Evolving Medical Guidelines</h3>
+        <p>
+          Medical and nursing science is a constantly evolving field. Clinical guidelines, protocols, nomenclature, drug information, treatment procedures, and best practices are periodically revised by regulatory bodies, medical associations, and health authorities, both in India and internationally. As a result, certain answers, explanations, or content within our mock tests, question banks, and study materials may reflect the guidelines or standards prevailing at the time such content was created, and may not always align with the most current updates or revisions in medical science.
+        </p>
+        <p>
+          Additionally, despite our best efforts to review and verify all content for accuracy, unintentional typographical errors, factual inaccuracies, or discrepancies may occasionally occur in questions, answer options, or explanations due to human error during content creation, editing, or publishing.
+        </p>
+        <p>By using the Platform, you acknowledge and agree that:</p>
+        <ul className="list-disc pl-5 space-y-1">
+          <li>OSSSC.Online and ABC Skills do not guarantee that all content will remain accurate, current, or error-free at all times, given the evolving nature of medical science and the possibility of inadvertent human error.</li>
+          <li>Any such discrepancies, outdated information, or typographical errors are unintentional, and the organisation shall not be held liable for any loss, inconvenience, confusion, or impact on exam performance arising from such errors.</li>
+          <li>OSSSC.Online and ABC Skills shall be immune from any claims, disputes, or liability arising out of unforeseen and unintentional inaccuracies in content, including but not limited to changes in medical guidelines occurring after content publication, and clerical or typographical errors.</li>
+          <li>Users are encouraged to cross-verify critical medical information with official, updated sources and current examination syllabi, and to report any errors they identify so that we can review and correct them promptly.</li>
+          <li>We reserve the right to update, correct, or revise any content on the Platform at any time, without prior notice, as part of our ongoing effort to maintain the highest possible standard of accuracy.</li>
+        </ul>
+      </section>
+
+      <section className="space-y-2">
+        <h3 className="font-bold text-slate-900">12. Modifications to Terms</h3>
+        <p>
+          We reserve the right to update or modify these Terms at any time. Continued use of the Platform after changes are posted constitutes your acceptance of the revised Terms. We encourage you to review this page periodically.
+        </p>
+      </section>
+
+      <section className="space-y-2">
+        <h3 className="font-bold text-slate-900">13. Termination</h3>
+        <p>
+          We reserve the right to suspend or terminate your access to the Platform, without prior notice, for conduct that we believe violates these Terms or is harmful to other users, us, or third parties.
+        </p>
+      </section>
+
+      <section className="space-y-2">
+        <h3 className="font-bold text-slate-900">14. Governing Law and Jurisdiction</h3>
+        <p>
+          These Terms shall be governed by and construed in accordance with the laws of India. Any disputes arising out of or in connection with these Terms shall be subject to the exclusive jurisdiction of the courts in Bhubaneswar, Odisha.
+        </p>
+      </section>
+
+      <section className="space-y-2">
+        <h3 className="font-bold text-slate-900">15. Contact Us</h3>
+        <p>If you have any questions about these Terms, please contact us at:</p>
+        <ul className="list-none pl-0 space-y-1">
+          <li>
+            📧 <a href="mailto:abcsupportindia@gmail.com" className="text-sky-600 hover:underline">abcsupportindia@gmail.com</a>
+          </li>
+          <li>📍 Bhubaneswar, Odisha</li>
+        </ul>
+      </section>
+    </div>
+  )
+}
+
+function RefundContent() {
+  return (
+    <div className="space-y-6 text-slate-600 leading-relaxed">
+      <div>
+        <h2 className="text-2xl font-extrabold text-slate-900">Refund Policy</h2>
+        <p className="text-sm text-slate-500 mt-1">Last Updated: July 27, 2026</p>
+      </div>
+      <p>
+        This Refund Policy applies to all paid services offered on OSSSC.Online, an initiative by ABC Skills.
+      </p>
+
+      <section className="space-y-2">
+        <h3 className="font-bold text-slate-900">1. General Policy</h3>
+        <p>
+          Given the digital nature of our mock tests, study materials, and premium content, all sales are generally final once access has been granted. However, we want our users to be satisfied, so the exceptions below outline when a refund may be considered.
+        </p>
+      </section>
+
+      <section className="space-y-2">
+        <h3 className="font-bold text-slate-900">2. Eligibility for Refund</h3>
+        <p>You may be eligible for a refund if:</p>
+        <ul className="list-disc pl-5 space-y-1">
+          <li>You were charged multiple times for the same subscription or product due to a technical error</li>
+          <li>You purchased a premium plan but were unable to access it due to a verified technical issue on our end that we could not resolve within a reasonable time</li>
+          <li>You cancel a subscription within 24 hours of purchase, provided you have not accessed any premium mock tests, question banks, or downloadable materials</li>
+        </ul>
+      </section>
+
+      <section className="space-y-2">
+        <h3 className="font-bold text-slate-900">3. Non-Refundable Situations</h3>
+        <p>Refunds will not be provided in the following cases:</p>
+        <ul className="list-disc pl-5 space-y-1">
+          <li>You have accessed, attempted, or downloaded any premium mock test, question bank, or study material</li>
+          <li>Change of mind after accessing paid content</li>
+          <li>Failure to clear the OSSSC exam or any other examination</li>
+          <li>Incorrect purchase due to user error (e.g., wrong plan selected), once the plan has been activated and accessed</li>
+          <li>Requests made after the eligible refund window has passed</li>
+        </ul>
+      </section>
+
+      <section className="space-y-2">
+        <h3 className="font-bold text-slate-900">4. How to Request a Refund</h3>
+        <p>To request a refund, please contact us at <a href="mailto:abcsupportindia@gmail.com" className="text-sky-600 hover:underline">abcsupportindia@gmail.com</a> within the eligible window, along with:</p>
+        <ul className="list-disc pl-5 space-y-1">
+          <li>Your registered email/phone number</li>
+          <li>Transaction ID or payment reference</li>
+          <li>Reason for the refund request</li>
+        </ul>
+      </section>
+
+      <section className="space-y-2">
+        <h3 className="font-bold text-slate-900">5. Refund Processing</h3>
+        <ul className="list-disc pl-5 space-y-1">
+          <li>Approved refunds will be processed within 7–10 business days to the original payment method.</li>
+          <li>Processing times may vary depending on your bank or payment provider.</li>
+          <li>We reserve the right to approve or deny refund requests at our discretion based on the criteria above.</li>
+        </ul>
+      </section>
+
+      <section className="space-y-2">
+        <h3 className="font-bold text-slate-900">6. Subscription Cancellations</h3>
+        <p>
+          You may cancel a recurring subscription at any time. Cancellation will stop future billing but does not automatically entitle you to a refund for the current billing period, unless it falls under the eligibility criteria in Section 2.
+        </p>
+      </section>
+
+      <section className="space-y-2">
+        <h3 className="font-bold text-slate-900">7. Contact Us</h3>
+        <p>For refund-related queries, reach out to:</p>
+        <ul className="list-none pl-0 space-y-1">
+          <li>
+            📧 <a href="mailto:abcsupportindia@gmail.com" className="text-sky-600 hover:underline">abcsupportindia@gmail.com</a>
+          </li>
+          <li>📍 Bhubaneswar, Odisha</li>
+        </ul>
+      </section>
+    </div>
+  )
+}
+
+function PrivacyContent() {
+  return (
+    <div className="space-y-6 text-slate-600 leading-relaxed">
+      <div>
+        <h2 className="text-2xl font-extrabold text-slate-900">Privacy Policy</h2>
+        <p className="text-sm text-slate-500 mt-1">Last Updated: July 27, 2026</p>
+      </div>
+      <p>
+        OSSSC.Online, an initiative by ABC Skills (&quot;we&quot;, &quot;us&quot;, &quot;our&quot;), is committed to protecting your privacy. This Privacy Policy explains how we collect, use, store, and protect your personal information when you use our Platform.
+      </p>
+
+      <section className="space-y-2">
+        <h3 className="font-bold text-slate-900">1. Information We Collect</h3>
+        <ul className="list-disc pl-5 space-y-2">
+          <li>
+            <strong>a) Information You Provide:</strong>
+            <ul className="list-disc pl-5 space-y-1 mt-1">
+              <li>Name, email address, and phone number (used for account registration and OTP-based login)</li>
+              <li>Educational qualifications and work experience details (for eligibility/profile purposes)</li>
+              <li>Payment information (processed via third-party payment gateways — we do not store your full card/bank details on our servers)</li>
+            </ul>
+          </li>
+          <li>
+            <strong>b) Information Collected Automatically:</strong>
+            <ul className="list-disc pl-5 space-y-1 mt-1">
+              <li>Device information, browser type, and IP address</li>
+              <li>Usage data such as pages visited, mock tests attempted, time spent, and performance analytics</li>
+              <li>Cookies and similar tracking technologies (see Section 6)</li>
+            </ul>
+          </li>
+        </ul>
+      </section>
+
+      <section className="space-y-2">
+        <h3 className="font-bold text-slate-900">2. How We Use Your Information</h3>
+        <p>We use your information to:</p>
+        <ul className="list-disc pl-5 space-y-1">
+          <li>Create and manage your account, including OTP-based email login and authentication</li>
+          <li>Provide access to mock tests, study materials, and premium features</li>
+          <li>Track and display your performance analytics</li>
+          <li>Send exam updates, notifications, and important announcements</li>
+          <li>Process payments and manage subscriptions</li>
+          <li>Improve our Platform, content, and user experience</li>
+          <li>Respond to support requests and communications</li>
+          <li>Comply with legal obligations</li>
+        </ul>
+      </section>
+
+      <section className="space-y-2">
+        <h3 className="font-bold text-slate-900">3. OTP-Based Login & Account Security</h3>
+        <ul className="list-disc pl-5 space-y-1">
+          <li>We use One-Time Password (OTP) verification sent to your registered email for secure login.</li>
+          <li>OTPs are time-limited and single-use for security purposes.</li>
+          <li>We recommend not sharing your OTP or login credentials with anyone.</li>
+        </ul>
+      </section>
+
+      <section className="space-y-2">
+        <h3 className="font-bold text-slate-900">4. Data Sharing and Disclosure</h3>
+        <p>We do not sell your personal information. We may share your information with:</p>
+        <ul className="list-disc pl-5 space-y-1">
+          <li>Payment processors to complete transactions securely</li>
+          <li>Service providers who help us operate the Platform (e.g., hosting, email/SMS delivery, analytics)</li>
+          <li>Legal authorities, if required by law, court order, or government regulation</li>
+          <li>In connection with a business transfer (e.g., merger, acquisition), where your data may be transferred as part of that transaction, subject to confidentiality</li>
+        </ul>
+        <p>We do not share your data with third parties for their own marketing purposes without your consent.</p>
+      </section>
+
+      <section className="space-y-2">
+        <h3 className="font-bold text-slate-900">5. Data Storage and Security</h3>
+        <ul className="list-disc pl-5 space-y-1">
+          <li>Your data is stored on secure servers with reasonable technical and organizational safeguards in place.</li>
+          <li>While we take data protection seriously, no method of transmission or storage is 100% secure, and we cannot guarantee absolute security.</li>
+          <li>Payment data is handled by PCI-DSS compliant third-party payment gateways; we do not store complete card details.</li>
+        </ul>
+      </section>
+
+      <section className="space-y-2">
+        <h3 className="font-bold text-slate-900">6. Cookies and Tracking</h3>
+        <p>We use cookies and similar technologies to:</p>
+        <ul className="list-disc pl-5 space-y-1">
+          <li>Keep you logged in during your session</li>
+          <li>Understand usage patterns and improve the Platform</li>
+          <li>Remember your preferences</li>
+        </ul>
+        <p>
+          You can control cookie settings through your browser, though disabling cookies may affect certain features of the Platform.
+        </p>
+      </section>
+
+      <section className="space-y-2">
+        <h3 className="font-bold text-slate-900">7. Your Rights</h3>
+        <p>You have the right to:</p>
+        <ul className="list-disc pl-5 space-y-1">
+          <li>Access the personal information we hold about you</li>
+          <li>Request correction of inaccurate or incomplete information</li>
+          <li>Request deletion of your account and associated data, subject to any legal retention requirements</li>
+          <li>Withdraw consent for non-essential communications (e.g., promotional emails/SMS) at any time</li>
+        </ul>
+        <p>
+          To exercise these rights, contact us at <a href="mailto:abcsupportindia@gmail.com" className="text-sky-600 hover:underline">abcsupportindia@gmail.com</a>.
+        </p>
+      </section>
+
+      <section className="space-y-2">
+        <h3 className="font-bold text-slate-900">8. Data Retention</h3>
+        <p>
+          We retain your personal information for as long as your account is active or as needed to provide our services, comply with legal obligations, resolve disputes, and enforce our agreements.
+        </p>
+      </section>
+
+      <section className="space-y-2">
+        <h3 className="font-bold text-slate-900">9. Children&apos;s Privacy</h3>
+        <p>
+          The Platform is intended for use by individuals who meet the eligibility criteria for nursing recruitment exams (i.e., adults with relevant qualifications and experience). We do not knowingly collect information from minors.
+        </p>
+      </section>
+
+      <section className="space-y-2">
+        <h3 className="font-bold text-slate-900">10. Changes to This Policy</h3>
+        <p>
+          We may update this Privacy Policy from time to time. Changes will be posted on this page with an updated &quot;Last Updated&quot; date. Continued use of the Platform after changes constitutes acceptance of the revised policy.
+        </p>
+      </section>
+
+      <section className="space-y-2">
+        <h3 className="font-bold text-slate-900">11. Contact Us</h3>
+        <p>For any privacy-related questions or requests, contact us at:</p>
+        <ul className="list-none pl-0 space-y-1">
+          <li>
+            📧 <a href="mailto:abcsupportindia@gmail.com" className="text-sky-600 hover:underline">abcsupportindia@gmail.com</a>
+          </li>
+          <li>📍 Bhubaneswar, Odisha</li>
+        </ul>
+      </section>
+    </div>
   )
 }
 
@@ -716,6 +1329,7 @@ export default function LandingPage() {
       <HowItWorks />
       <Testimonials />
       <Plans />
+      <AboutUs />
       <FAQ />
       <CTABanner />
       <Footer />

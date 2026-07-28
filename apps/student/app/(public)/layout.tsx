@@ -1,17 +1,14 @@
 import type { ReactNode } from "react"
-import { GraduationCap } from "lucide-react"
 
 export default function PublicLayout({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen grid lg:grid-cols-2">
       {/* Left — Brand panel */}
       <div className="hidden lg:flex flex-col justify-between p-10 gradient-brand text-white">
-        <div className="flex items-center gap-2.5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/20">
-            <GraduationCap className="h-5 w-5" />
-          </div>
-          <span className="text-xl font-bold tracking-tight">ABC Exam Portal</span>
-        </div>
+        <a href="/" className="flex items-center gap-2.5">
+          <img src="/osssc-logo.png" alt="OSSSC Online" className="h-27 w-22 object-contain drop-shadow-md shrink-0 translate-y-[9px]" />
+          <span className="text-xl font-bold tracking-tight whitespace-nowrap">OSSSC ONLINE</span>
+        </a>
         <div className="space-y-4">
           <h2 className="text-3xl font-bold leading-tight">
             Prepare smarter.<br />Score higher.
@@ -20,7 +17,7 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
             Practice 1000+ curated MCQs across anatomy, physiology, biochemistry and more — with detailed explanations.
           </p>
         </div>
-        <p className="text-sm text-white/50">© {new Date().getFullYear()} ABC Exam Portal</p>
+        <p className="text-sm text-white/50">© {new Date().getFullYear()} OSSSC Online</p>
       </div>
 
       {/* Right — Form area */}

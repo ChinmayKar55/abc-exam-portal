@@ -10,7 +10,7 @@ import { Progress } from "@/components/ui/progress"
 import { useCountdown } from "@/hooks/useCountdown"
 import { useExamWS } from "@/hooks/useExamWS"
 import { examQueries } from "@/lib/queries/exams"
-import { formatCountdown, cn } from "@/lib/utils"
+import { formatCountdown, cn, exitFullscreen } from "@/lib/utils"
 import type { StartResponse, ShuffledQuestion } from "@/lib/queries/exams"
 
 // ─── Reducer ────────────────────────────────────────────────────────────────
@@ -130,12 +130,9 @@ const ExamTimer = memo(function ExamTimer({ expiresAt, onExpire }: { expiresAt: 
   )
 })
 
-function exitFullscreenAndNavigate(path: string, push: (p: string) => void) {
-  if (document.fullscreenElement) {
-    document.exitFullscreen().catch(() => {}).finally(() => push(path))
-  } else {
-    push(path)
-  }
+async function exitFullscreenAndNavigate(path: string, push: (p: string) => void) {
+  await exitFullscreen()
+  push(path)
 }
 
 // ─── Main component ──────────────────────────────────────────────────────────
@@ -165,10 +162,12 @@ export function ExamRoom({ data }: ExamRoomProps) {
     submittingRef.current = true
     setConfirmOpen(false)
     dispatch({ type: "SUBMIT" })
+    // Exit fullscreen while the submit-button click gesture is still valid.
+    await exitFullscreen()
     try {
       await examQueries.submit(data.attempt_id)
     } catch {}
-    exitFullscreenAndNavigate(`/results/${data.attempt_id}`, router.push)
+    router.push(`/results/${data.attempt_id}`)
   }, [data.attempt_id, router])
 
   const handleAutoSubmit = useCallback(() => {
