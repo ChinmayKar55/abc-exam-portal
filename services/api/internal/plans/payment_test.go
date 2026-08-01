@@ -153,7 +153,7 @@ func openPaymentTestDB(t *testing.T) *pgxpool.Pool {
 		CREATE TYPE payment_status AS ENUM ('pending', 'captured', 'failed', 'refunded');
 		CREATE TYPE payment_type AS ENUM ('plan_purchase', 'exam_purchase');
 		CREATE TABLE users (id UUID PRIMARY KEY, name TEXT NOT NULL, email TEXT NOT NULL);
-		CREATE TABLE plans (id UUID PRIMARY KEY, name TEXT NOT NULL, price_paise INTEGER NOT NULL, active BOOLEAN NOT NULL DEFAULT true);
+		CREATE TABLE plans (id UUID PRIMARY KEY, name TEXT NOT NULL, price_paise INTEGER NOT NULL, duration_days INTEGER NOT NULL DEFAULT 0, active BOOLEAN NOT NULL DEFAULT true);
 		CREATE TABLE payments (
 			id UUID PRIMARY KEY,
 			user_id UUID NOT NULL REFERENCES users(id),
@@ -173,7 +173,10 @@ func openPaymentTestDB(t *testing.T) *pgxpool.Pool {
 			plan_id UUID NOT NULL REFERENCES plans(id),
 			payment_id UUID REFERENCES payments(id),
 			activated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-			active BOOLEAN NOT NULL DEFAULT true
+			expires_at TIMESTAMPTZ,
+			active BOOLEAN NOT NULL DEFAULT true,
+			expiry_warning_sent BOOLEAN NOT NULL DEFAULT false,
+			expired_notification_sent BOOLEAN NOT NULL DEFAULT false
 		);
 		CREATE UNIQUE INDEX uq_user_plans_payment ON user_plans(payment_id) WHERE payment_id IS NOT NULL;
 	`
