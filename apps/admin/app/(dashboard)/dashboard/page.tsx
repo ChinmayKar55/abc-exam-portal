@@ -1,6 +1,6 @@
 "use client"
 import { useQuery } from "@tanstack/react-query"
-import { Users, BookOpen, FileText, Activity, DollarSign } from "lucide-react"
+import { Users, BookOpen, FileText, Activity, DollarSign, Crown, CreditCard } from "lucide-react"
 import type { ColumnDef } from "@tanstack/react-table"
 import { StatCard } from "@/components/dashboard/StatCard"
 import { DataTable } from "@/components/shared/DataTable"
@@ -46,7 +46,9 @@ export default function DashboardPage() {
     { label: "Total Questions", value: stats?.total_questions ?? 0,   icon: FileText,  iconBg: "bg-[color:var(--color-ocean-50)]",   iconColor: "text-[color:var(--color-ocean-600)]" },
     { label: "Exams",           value: stats?.total_exams ?? 0,       icon: BookOpen,  iconBg: "bg-[color:var(--color-success-50)]", iconColor: "text-[color:var(--color-success-700)]" },
     { label: "Attempts",        value: stats?.total_attempts ?? 0,    icon: Activity,  iconBg: "bg-[color:var(--color-warning-50)]", iconColor: "text-[color:var(--color-warning-700)]" },
+    { label: "Active Subs",     value: stats?.active_subscriptions ?? 0, icon: CreditCard, iconBg: "bg-[color:var(--color-ocean-50)]", iconColor: "text-[color:var(--color-ocean-600)]" },
     { label: "Revenue",         value: stats ? formatCurrency(stats.revenue_captured_paise) : "—", icon: DollarSign, iconBg: "bg-[color:var(--color-success-50)]", iconColor: "text-[color:var(--color-success-700)]" },
+    { label: "Sub Revenue",     value: stats ? formatCurrency(stats.subscription_revenue_captured_paise) : "—", icon: Crown, iconBg: "bg-violet-100", iconColor: "text-violet-700" },
   ]
 
   return (
@@ -54,7 +56,7 @@ export default function DashboardPage() {
       <PageHeader title="Dashboard" description="Overview of your exam portal" />
 
       {/* Stats grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {statCards.map((card) => (
           <StatCard key={card.label} {...card} isLoading={statsLoading} />
         ))}

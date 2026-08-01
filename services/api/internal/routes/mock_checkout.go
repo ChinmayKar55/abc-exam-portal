@@ -77,7 +77,7 @@ func registerMockCheckout(app *fiber.App, db *pgxpool.Pool, cfg *config.Config) 
         if (data.success) {
           statusEl.className = 'status-ok';
           statusEl.textContent = '✅ Payment successful! Redirecting...';
-          setTimeout(() => window.location.href = '%s/plans?payment=success', 2000);
+          setTimeout(() => window.location.href = data.redirect_url || '%s/plans?payment=success', 2000);
         } else {
           statusEl.className = 'status-err';
           statusEl.textContent = '❌ Payment failed: ' + (data.error || 'Unknown error');
@@ -112,16 +112,23 @@ func registerMockCheckout(app *fiber.App, db *pgxpool.Pool, cfg *config.Config) 
 
 		paymentID := "mock_pay_" + uuid.New().String()[:8]
 		var amount int
+		var paymentType string
 		_ = db.QueryRow(c.Context(),
-			`SELECT amount_paise FROM payments WHERE razorpay_order_id = $1`, req.OrderID,
-		).Scan(&amount)
+			`SELECT amount_paise, type FROM payments WHERE razorpay_order_id = $1`, req.OrderID,
+		).Scan(&amount, &paymentType)
 
+		status := "captured"
+		if event == "payment.failed" {
+			status = "failed"
+		}
 		payload, _ := json.Marshal(map[string]interface{}{
 			"event": event,
 			"order": map[string]string{"id": req.OrderID},
 			"payment": map[string]interface{}{
 				"id":         paymentID,
 				"amount":     amount,
+				"currency":   "INR",
+				"status":     status,
 				"created_at": time.Now().Unix(),
 			},
 		})
@@ -130,7 +137,13 @@ func registerMockCheckout(app *fiber.App, db *pgxpool.Pool, cfg *config.Config) 
 		mac.Write(payload)
 		sig := hex.EncodeToString(mac.Sum(nil))
 
-		webhookURL := fmt.Sprintf("http://localhost:%s/api/webhooks/payment", cfg.Port)
+		webhookPath := "/api/webhooks/payment"
+		redirectPath := fmt.Sprintf("/payment/success?order_id=%s&payment_id=%s", req.OrderID, paymentID)
+		if paymentType == "subscription_purchase" {
+			webhookPath = "/api/webhooks/subscription"
+		}
+
+		webhookURL := fmt.Sprintf("http://localhost:%s%s", cfg.Port, webhookPath)
 		httpReq, _ := http.NewRequest("POST", webhookURL, bytes.NewReader(payload))
 		httpReq.Header.Set("Content-Type", "application/json")
 		httpReq.Header.Set("X-Mock-Signature", sig)
@@ -146,9 +159,10 @@ func registerMockCheckout(app *fiber.App, db *pgxpool.Pool, cfg *config.Config) 
 		}
 
 		return c.JSON(fiber.Map{
-			"success":    req.Outcome == "success",
-			"payment_id": paymentID,
-			"event":      event,
+			"success":      req.Outcome == "success",
+			"payment_id":   paymentID,
+			"event":        event,
+			"redirect_url": cfg.CORS.FrontendURL + redirectPath,
 		})
 	})
 }

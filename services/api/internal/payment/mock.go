@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
@@ -30,6 +31,10 @@ func (m *MockProvider) CreateOrder(_ context.Context, req CreateOrderRequest) (O
 	}, nil
 }
 
+func (m *MockProvider) FetchPayment(_ context.Context, _ string) (PaymentDetails, error) {
+	return PaymentDetails{}, errors.New("mock provider does not support payment lookup")
+}
+
 func (m *MockProvider) VerifyWebhookSignature(payload []byte, signature string) bool {
 	mac := hmac.New(sha256.New, []byte(m.webhookSecret))
 	mac.Write(payload)
@@ -46,8 +51,10 @@ func (m *MockProvider) VerifyPaymentSignature(orderID, paymentID, signature stri
 
 func (m *MockProvider) ParseWebhookEvent(payload []byte) (*WebhookEvent, error) {
 	var raw struct {
-		Event  string `json:"event"`
-		Order  struct{ ID string `json:"id"` } `json:"order"`
+		Event string `json:"event"`
+		Order struct {
+			ID string `json:"id"`
+		} `json:"order"`
 		Payment struct {
 			ID     string `json:"id"`
 			Amount int    `json:"amount"`
@@ -65,6 +72,7 @@ func (m *MockProvider) ParseWebhookEvent(payload []byte) (*WebhookEvent, error) 
 		OrderID:   raw.Order.ID,
 		PaymentID: raw.Payment.ID,
 		Amount:    raw.Payment.Amount,
+		Currency:  "INR",
 		Status:    status,
 	}, nil
 }
@@ -76,6 +84,8 @@ func (m *MockProvider) GenerateWebhookPayload(orderID, paymentID, event string, 
 		"payment": map[string]interface{}{
 			"id":         paymentID,
 			"amount":     amount,
+			"currency":   "INR",
+			"status":     map[bool]string{true: "failed", false: "captured"}[event == "payment.failed"],
 			"created_at": time.Now().Unix(),
 		},
 	})

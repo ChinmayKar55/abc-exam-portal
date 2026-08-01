@@ -1,32 +1,29 @@
 "use client"
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useState, useEffect } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
-import { CheckCircle2, Loader2, Zap, BookOpen, FileText, AlertCircle } from "lucide-react"
+import { CheckCircle2, Zap, BookOpen, FileText, AlertCircle } from "lucide-react"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { PageHeader } from "@/components/shared/PageHeader"
 import { planQueries, type Plan, type PlanExam, type PlanMaterial } from "@/lib/queries/plans"
-import { useRazorpay } from "@/hooks/useRazorpay"
-import { useAuthStore } from "@/store/auth"
+import { subscriptionQueries } from "@/lib/queries/subscription"
+import { useAuthReady } from "@/lib/providers"
 import { formatCurrency, formatDate, cn } from "@/lib/utils"
 
 export default function PlansPage() {
   const qc = useQueryClient()
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { openCheckout } = useRazorpay()
-  const authUser = useAuthStore((s) => s.user)
-  const [purchasing, setPurchasing] = useState<string | null>(null)
+  const isAuthReady = useAuthReady()
   const [successMsg, setSuccessMsg] = useState("")
-  const [errorMsg, setErrorMsg] = useState("")
 
   // Detect redirect back from mock payment gateway
   useEffect(() => {
     if (searchParams.get("payment") === "success") {
-      setSuccessMsg("Payment successful! Your plan is now active.")
+      setSuccessMsg("Payment successful! Your package is now active.")
       qc.invalidateQueries({ queryKey: ["my-plans"] })
       router.replace("/plans", { scroll: false })
     }
@@ -40,82 +37,38 @@ export default function PlansPage() {
   const { data: myPlans = [], isLoading: myPlansLoading } = useQuery({
     queryKey: ["my-plans"],
     queryFn: planQueries.myPlans,
+    enabled: isAuthReady,
   })
 
-  const verifyPaymentMutation = useMutation({
-    mutationFn: planQueries.verifyPayment,
-    onSuccess: () => {
-      setSuccessMsg("Payment successful! Your plan is now active.")
-      qc.invalidateQueries({ queryKey: ["my-plans"] })
-    },
-    onError: (err: Error) => {
-      setErrorMsg(err.message || "Payment verification failed. Please contact support.")
-    },
+  const { data: mySub } = useQuery({
+    queryKey: ["my-subscription"],
+    queryFn: subscriptionQueries.mySubscription,
+    enabled: isAuthReady,
   })
 
-  const handleRazorpaySuccess = (plan: Plan) => (response: {
-    razorpay_payment_id: string
-    razorpay_order_id: string
-    razorpay_signature: string
-  }) => {
-    verifyPaymentMutation.mutate({
-      razorpay_payment_id: response.razorpay_payment_id,
-      razorpay_order_id: response.razorpay_order_id,
-      razorpay_signature: response.razorpay_signature,
-    })
-  }
+  const isMax = mySub?.tier === "max"
+  const isProOrMax = mySub?.tier === "pro" || mySub?.tier === "max"
 
-  const purchaseMutation = useMutation({
-    mutationFn: (planId: string) => planQueries.purchase(planId),
-    onMutate: (planId) => {
-      setErrorMsg("")
-      setPurchasing(planId)
-    },
-    onSuccess: (data, planId) => {
-      setPurchasing(null)
-      if (data?.mock_checkout_url) {
-        window.location.href = data.mock_checkout_url
-        return
-      }
-
-      if (data?.key_id && data?.order_id) {
-        const plan = plans.find((p) => p.id === planId)
-        if (!plan) return
-
-        openCheckout({
-          key: data.key_id,
-          amount: data.amount_paise,
-          currency: data.currency,
-          order_id: data.order_id,
-          name: "OSSSC Online",
-          description: plan.name,
-          prefill: {
-            name: authUser?.name ?? "",
-            email: authUser?.email ?? "",
-          },
-          theme: { color: "#0284c7" },
-          onSuccess: handleRazorpaySuccess(plan),
-          onDismiss: () => setPurchasing(null),
-          onError: () => {
-            setPurchasing(null)
-            setErrorMsg("Payment failed or was cancelled. Please try again.")
-          },
-        })
-        return
-      }
-
-      setSuccessMsg("Plan activated! Enjoy your exams.")
-      qc.invalidateQueries({ queryKey: ["my-plans"] })
-    },
-    onError: (err: Error) => {
-      setPurchasing(null)
-      setErrorMsg(err.message || "Unable to start purchase. Please try again.")
-    },
-  })
+  useEffect(() => {
+    if (isProOrMax) {
+      router.replace("/subscription")
+    }
+  }, [isProOrMax, router])
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Plans & Pricing" description="Unlock full access to all exam content" />
+      <PageHeader title="Packages" description="Add specific exams and study materials to your account on top of your plan" />
+
+      {/* Max plan subscribers have all packages included */}
+      {isMax && (
+        <div className="flex items-start gap-3 rounded-[var(--radius)] border border-[color:var(--color-success-500)]/30 bg-[color:var(--color-success-50)] px-4 py-3">
+          <CheckCircle2 className="h-5 w-5 text-[color:var(--color-success-500)] shrink-0 mt-0.5" />
+          <div className="text-sm space-y-0.5">
+            <p className="font-semibold text-[color:var(--color-success-700)]">You have Max</p>
+            <p className="text-[color:var(--color-success-700)]">All packages are included in your Max plan.</p>
+          </div>
+        </div>
+      )}
 
       {/* Active plans banner — shows all owned plans */}
       {!myPlansLoading && myPlans.length > 0 && (
@@ -142,12 +95,6 @@ export default function PlansPage() {
         </div>
       )}
 
-      {errorMsg && (
-        <div className="flex items-center gap-3 rounded-[var(--radius)] border border-red-500/30 bg-red-50 px-4 py-3">
-          <AlertCircle className="h-5 w-5 text-red-500 shrink-0" />
-          <p className="text-sm font-medium text-red-700">{errorMsg}</p>
-        </div>
-      )}
 
       {plansLoading ? (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -157,8 +104,9 @@ export default function PlansPage() {
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {plans.filter((p) => p.active).map((plan) => {
             const ownedPlanIDs = new Set(myPlans.map((up) => up.plan_id))
-            const isCurrent = ownedPlanIDs.has(plan.id)
+            const isCurrent = ownedPlanIDs.has(plan.id) || isMax
             const isPopular = plans.indexOf(plan) === 1
+            const buttonLabel = isMax ? "Included with Max" : isCurrent ? "Owned" : "Get started"
             return (
               <Card
                 key={plan.id}
@@ -181,6 +129,9 @@ export default function PlansPage() {
                 <CardContent className="flex-1 space-y-4">
                   <div>
                     <span className="text-3xl font-bold">{formatCurrency(plan.price_paise)}</span>
+                    <p className="text-sm text-[var(--muted-foreground)] mt-1">
+                      {plan.duration_days > 0 ? `Valid for ${plan.duration_days} days` : "Lifetime access"}
+                    </p>
                   </div>
                   <ul className="space-y-2">
                     {plan.exams?.map((e: PlanExam) => (
@@ -204,11 +155,10 @@ export default function PlansPage() {
                   <Button
                     className="w-full"
                     variant={isCurrent ? "outline" : "default"}
-                    disabled={isCurrent || purchasing === plan.id}
-                    onClick={() => purchaseMutation.mutate(plan.id)}
+                    disabled={isCurrent}
+                    onClick={() => !isMax && router.push(`/checkout?type=package&planId=${plan.id}`)}
                   >
-                    {purchasing === plan.id && <Loader2 className="h-4 w-4 animate-spin" />}
-                    {isCurrent ? "Owned" : "Get started"}
+                    {buttonLabel}
                   </Button>
                 </CardFooter>
               </Card>

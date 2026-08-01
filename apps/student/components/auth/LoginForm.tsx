@@ -2,6 +2,7 @@
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useRouter, useSearchParams } from "next/navigation"
+import { useQueryClient } from "@tanstack/react-query"
 import Link from "next/link"
 import { useState } from "react"
 import { Eye, EyeOff, Loader2 } from "lucide-react"
@@ -16,6 +17,7 @@ import { cn } from "@/lib/utils"
 export function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const qc = useQueryClient()
   const setAuth = useAuthStore((s) => s.setAuth)
   const [showPw, setShowPw] = useState(false)
   const [serverError, setServerError] = useState("")
@@ -32,6 +34,8 @@ export function LoginForm() {
     try {
       const res = await authQueries.login(data)
       setAuth(res.user, res.access_token)
+      qc.invalidateQueries({ queryKey: ["my-subscription"] })
+      qc.invalidateQueries({ queryKey: ["my-plans"] })
       router.push("/home")
     } catch (err: unknown) {
       const msg = (err as { message?: string })?.message ?? "Login failed"

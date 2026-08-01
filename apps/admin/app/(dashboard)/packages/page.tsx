@@ -15,9 +15,10 @@ import { examQueries, type Exam } from "@/lib/queries/exams"
 import { formatCurrency, formatDate } from "@/lib/utils"
 
 const columns = (onEdit: (p: Plan) => void, onDelete: (id: string) => void): ColumnDef<Plan>[] => [
-  { accessorKey: "name", header: "Plan", cell: ({ row }) => <span className="font-medium text-sm">{row.original.name}</span> },
+  { accessorKey: "name", header: "Package", cell: ({ row }) => <span className="font-medium text-sm">{row.original.name}</span> },
   { accessorKey: "description", header: "Description", cell: ({ row }) => <span className="text-sm text-[var(--muted-foreground)]">{row.original.description}</span> },
   { accessorKey: "price_paise", header: "Price", cell: ({ row }) => <span className="font-mono font-semibold text-sm">{formatCurrency(row.original.price_paise)}</span> },
+  { accessorKey: "duration_days", header: "Duration (days)", cell: ({ row }) => <span className="text-sm">{row.original.duration_days > 0 ? row.original.duration_days : "Lifetime"}</span> },
   { accessorKey: "exams", header: "Exams", cell: ({ row }) => <Badge variant="ocean">{row.original.exams?.length ?? 0}</Badge> },
   { accessorKey: "materials", header: "Materials", cell: ({ row }) => <Badge variant="brand">{row.original.materials?.length ?? 0}</Badge> },
   {
@@ -50,19 +51,20 @@ const DEFAULT_FORM: CreatePlanInput = {
   name: "",
   description: "",
   price_paise: 0,
+  duration_days: 0,
   active: true,
   exam_ids: [],
   material_ids: [],
 }
 
-export default function PlansPage() {
+export default function PackagesPage() {
   const qc = useQueryClient()
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [form, setForm] = useState<CreatePlanInput>(DEFAULT_FORM)
 
   const { data: plans = [], isLoading } = useQuery({
-    queryKey: ["admin-plans"],
+    queryKey: ["admin-packages"],
     queryFn: planQueries.list,
   })
 
@@ -85,17 +87,17 @@ export default function PlansPage() {
 
   const createMutation = useMutation({
     mutationFn: () => planQueries.create(form),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["admin-plans"] }); setDialogOpen(false) },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["admin-packages"] }); setDialogOpen(false) },
   })
 
   const updateMutation = useMutation({
     mutationFn: () => planQueries.update(editingId!, form),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["admin-plans"] }); setDialogOpen(false) },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["admin-packages"] }); setDialogOpen(false) },
   })
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => planQueries.delete(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["admin-plans"] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["admin-packages"] }),
   })
 
   const handleEdit = (p: Plan) => {
@@ -104,6 +106,7 @@ export default function PlansPage() {
       name: p.name,
       description: p.description,
       price_paise: p.price_paise,
+      duration_days: p.duration_days,
       active: p.active,
       exam_ids: p.exams?.map((e) => e.id) ?? [],
       material_ids: p.materials?.map((m) => m.id) ?? [],
@@ -118,11 +121,11 @@ export default function PlansPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Plans"
-        description={`${plans.length} plans configured`}
+        title="Packages"
+        description={`${plans.length} packages configured`}
         action={
           <Button onClick={() => setDialogOpen(true)}>
-            <Plus className="h-4 w-4" /> Create Plan
+            <Plus className="h-4 w-4" /> Create Package
           </Button>
         }
       />
@@ -131,13 +134,13 @@ export default function PlansPage() {
         data={plans}
         isLoading={isLoading}
         searchKey="name"
-        searchPlaceholder="Search plans…"
+        searchPlaceholder="Search packages…"
       />
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editingId ? "Edit Plan" : "Create Plan"}</DialogTitle>
+            <DialogTitle>{editingId ? "Edit Package" : "Create Package"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
@@ -150,8 +153,13 @@ export default function PlansPage() {
                 <Input value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} />
               </div>
               <div className="space-y-1.5">
-                <Label>Price (paise)</Label>
-                <Input type="number" min={0} value={form.price_paise} onChange={(e) => setForm((f) => ({ ...f, price_paise: Number(e.target.value) }))} />
+                <Label>Price (₹)</Label>
+                <Input type="number" min={0} step="0.01" value={form.price_paise / 100} onChange={(e) => setForm((f) => ({ ...f, price_paise: Math.round(Number(e.target.value) * 100) }))} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Duration (days)</Label>
+                <Input type="number" min={0} value={form.duration_days} onChange={(e) => setForm((f) => ({ ...f, duration_days: Number(e.target.value) }))} />
+                <p className="text-xs text-[var(--muted-foreground)]">0 = lifetime access</p>
               </div>
               <div className="flex items-center gap-2 pt-6">
                 <input
@@ -207,7 +215,7 @@ export default function PlansPage() {
               disabled={!form.name.trim() || (editingId ? updateMutation.isPending : createMutation.isPending)}
               onClick={() => editingId ? updateMutation.mutate() : createMutation.mutate()}
             >
-              <Save className="h-4 w-4" /> {editingId ? "Update Plan" : "Create Plan"}
+              <Plus className="h-4 w-4" /> {editingId ? "Update Package" : "Create Package"}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -9,6 +9,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/limiter"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
+	"github.com/rs/zerolog/log"
 
 	"github.com/abc-exam/api/internal/admin"
 	"github.com/abc-exam/api/internal/auth"
@@ -16,9 +17,11 @@ import (
 	"github.com/abc-exam/api/internal/email"
 	"github.com/abc-exam/api/internal/exam"
 	"github.com/abc-exam/api/internal/payment"
+	"github.com/abc-exam/api/internal/payments"
 	"github.com/abc-exam/api/internal/plans"
 	"github.com/abc-exam/api/internal/questions"
 	"github.com/abc-exam/api/internal/results"
+	"github.com/abc-exam/api/internal/subscription"
 )
 
 func Register(app *fiber.App, db *pgxpool.Pool, rdb *redis.Client, cfg *config.Config) func() {
@@ -70,12 +73,23 @@ func Register(app *fiber.App, db *pgxpool.Pool, rdb *redis.Client, cfg *config.C
 	if cfg.Payment.Provider == "mock" {
 		provider = payment.NewMockProvider(cfg.Payment.WebhookSecret)
 	} else {
+		if cfg.Payment.RazorpayKeyID == "" || cfg.Payment.RazorpaySecret == "" {
+			log.Fatal().Msg("PAYMENT_PROVIDER is set to 'razorpay' but RAZORPAY_KEY_ID or RAZORPAY_KEY_SECRET is empty")
+		}
 		provider = payment.NewRazorpayProvider(cfg.Payment.RazorpayKeyID, cfg.Payment.RazorpaySecret, cfg.Payment.WebhookSecret)
 	}
+
+	// Payments
+	paymentsSvc := payments.NewService(db)
+	paymentsHandler := payments.NewHandler(paymentsSvc)
+
+	api.Get("/my/payments", authMw, paymentsHandler.ListMyPayments)
+	api.Get("/my/payments/:order_id", authMw, paymentsHandler.GetMyPayment)
 
 	// Plans
 	plansSvc := plans.NewService(db, rdb, cfg, provider, mailer)
 	plansHandler := plans.NewHandler(plansSvc)
+	plansSvc.StartExpiryPoller(ctx, 60*time.Second)
 
 	api.Get("/plans", plansHandler.ListPlans)
 	api.Get("/plans/:id", plansHandler.GetPlan)
@@ -108,6 +122,20 @@ func Register(app *fiber.App, db *pgxpool.Pool, rdb *redis.Client, cfg *config.C
 	api.Put("/questions/uploads/:id/questions/:idx", authMw, auth.RequireRole("admin"), qHandler.UpdateParsedQuestion)
 	api.Post("/questions/uploads/:id/publish", authMw, auth.RequireRole("admin"), qHandler.PublishUpload)
 
+	// Subscriptions
+	subSvc := subscription.NewService(db, rdb, cfg, provider, mailer)
+	subHandler := subscription.NewHandler(subSvc)
+	subSvc.StartExpiryPoller(ctx, 60*time.Second)
+
+	api.Get("/subscription-plans", subHandler.ListTiers)
+	api.Get("/admin/subscription-plans", authMw, auth.RequireRole("admin"), subHandler.ListTiersAdmin)
+	api.Put("/admin/subscription-plans/:tier", authMw, auth.RequireRole("admin"), subHandler.UpdateTier)
+	api.Get("/my/subscription", authMw, subHandler.GetMySubscription)
+	api.Post("/subscriptions/subscribe", authMw, subHandler.InitiateSubscribe)
+	api.Post("/subscriptions/upgrade", authMw, subHandler.InitiateUpgrade)
+	api.Post("/subscriptions/verify", authMw, subHandler.VerifyPayment)
+	api.Post("/webhooks/subscription", subHandler.HandleWebhook)
+
 	// Exam engine
 	examSvc := exam.NewService(db, rdb)
 	examHandler := exam.NewHandler(examSvc)
@@ -115,6 +143,7 @@ func Register(app *fiber.App, db *pgxpool.Pool, rdb *redis.Client, cfg *config.C
 
 	api.Get("/exams", authMw, examHandler.ListExams)
 	api.Get("/admin/exams", authMw, auth.RequireRole("admin"), examHandler.ListAllExams)
+	api.Put("/admin/exams/bulk-tier", authMw, auth.RequireRole("admin"), examHandler.BulkUpdateAccessTier)
 	api.Get("/exams/:id", authMw, examHandler.GetExam)
 	api.Post("/exams", authMw, auth.RequireRole("admin"), examHandler.CreateExam)
 	api.Put("/exams/:id", authMw, auth.RequireRole("admin"), examHandler.UpdateExam)

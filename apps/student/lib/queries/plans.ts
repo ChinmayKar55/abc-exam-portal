@@ -28,6 +28,7 @@ export interface UserPlan {
   plan_name: string
   activated_at: string
   expires_at?: string
+  duration_days: number
   active: boolean
   exams: PlanExam[]
   materials: PlanMaterial[]
@@ -36,6 +37,10 @@ export interface UserPlan {
 export interface PurchaseResult {
   order_id: string
   amount_paise: number
+  base_amount_paise: number
+  tax_paise: number
+  total_paise: number
+  tax_rate: number
   currency: string
   mock_checkout_url?: string
   key_id?: string

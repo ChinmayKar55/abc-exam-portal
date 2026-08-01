@@ -1,6 +1,7 @@
 "use client"
 import Link from "next/link"
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useMemo } from "react"
+import { useQuery } from "@tanstack/react-query"
 import {
   ArrowRight, CheckCircle2, ChevronDown, Star, Users, BookOpen,
   Award, Shield, BarChart3, Clock, Menu, X, Zap, Target, TrendingUp,
@@ -8,6 +9,10 @@ import {
   Mail, Phone
 } from "lucide-react"
 import { FaFacebookF, FaInstagram, FaRedditAlien, FaWhatsapp } from "react-icons/fa"
+import { Skeleton } from "@/components/ui/skeleton"
+import { PricingCard, type PricingPlan, tierFeatures, tierDescriptions } from "@/components/pricing/PricingCard"
+import { subscriptionQueries, type SubscriptionPlan } from "@/lib/queries/subscription"
+import { formatDurationLabel } from "@/lib/utils"
 
 // ─── colour palette (sky-blue theme) ───────────────────────────────────────
 // Primary: #0284c7 (sky-600)   Accent: #0ea5e9 (sky-500)
@@ -485,40 +490,68 @@ function Testimonials() {
 }
 
 // ─── PLANS ──────────────────────────────────────────────────────────────────
-const PLANS = [
+const DEFAULT_API_PLANS: SubscriptionPlan[] = [
   {
+    id: "free",
+    tier: "free",
     name: "Free",
-    price: "₹0",
-    period: "forever",
-    desc: "Get started with practice tests — no card required.",
-    cta: "Get Started Free",
-    ctaHref: "/register",
-    highlight: false,
-    features: ["5 free mock tests / month", "Basic performance report", "1 exam series access", "Community support"],
+    description: tierDescriptions.free,
+    price_paise: 0,
+    duration_days: 0,
+    duration_label: "forever",
+    features: [],
   },
   {
+    id: "pro",
+    tier: "pro",
     name: "Pro",
-    price: "₹399",
-    period: "/ month",
-    desc: "Full access for serious OSSSC aspirants.",
-    cta: "Start Pro Trial",
-    ctaHref: "/register",
-    highlight: true,
-    features: ["Unlimited mock tests", "All exam series", "OMR + CBT formats", "AI proctored tests", "Detailed analytics", "PDF result reports", "Priority support"],
+    description: tierDescriptions.pro,
+    price_paise: 19900,
+    duration_days: 7,
+    duration_label: "7 days",
+    features: [],
   },
   {
-    name: "Crash Course",
-    price: "₹999",
-    period: "3 months",
-    desc: "Intensive prep bundle for upcoming OSSSC exams.",
-    cta: "Buy Crash Course",
-    ctaHref: "/register",
-    highlight: false,
-    features: ["Everything in Pro", "Live doubt sessions", "Weekly test series", "Rank predictor tool", "Last 10 year papers"],
+    id: "max",
+    tier: "max",
+    name: "Max",
+    description: tierDescriptions.max,
+    price_paise: 39900,
+    duration_days: 90,
+    duration_label: "3 months",
+    features: [],
   },
 ]
 
+function toPricingPlan(plan: SubscriptionPlan): PricingPlan {
+  return {
+    tier: plan.tier,
+    name: plan.name,
+    description: tierDescriptions[plan.tier] ?? plan.description,
+    pricePaise: plan.price_paise,
+    durationLabel: plan.duration_label ?? formatDurationLabel(plan.duration_days),
+    features: tierFeatures[plan.tier] ?? plan.features,
+    isPopular: plan.tier === "pro",
+    ctaLabel: plan.tier === "free" ? "Get Started Free" : `Start ${plan.name}`,
+    ctaHref: "/register",
+  }
+}
+
 function Plans() {
+  const { data: plans = DEFAULT_API_PLANS, isLoading } = useQuery({
+    queryKey: ["public-subscription-plans"],
+    queryFn: subscriptionQueries.list,
+    initialData: DEFAULT_API_PLANS,
+    retry: false,
+  })
+
+  const pricingPlans = useMemo(() => {
+    const all: SubscriptionPlan[] = plans.some((p) => p.tier === "free")
+      ? plans
+      : [DEFAULT_API_PLANS[0], ...plans]
+    return all.map(toPricingPlan)
+  }, [plans])
+
   return (
     <section id="plans" className="py-24 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -530,50 +563,19 @@ function Plans() {
           </p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-8 items-start">
-          {PLANS.map(({ name, price, period, desc, cta, ctaHref, highlight, features }) => (
-            <div key={name}
-              className={cn(
-                "rounded-3xl p-8 flex flex-col gap-6 border transition-all",
-                highlight
-                  ? "bg-gradient-to-b from-sky-600 to-sky-700 border-sky-500 shadow-2xl shadow-sky-500/25 scale-105"
-                  : "bg-white border-slate-200 hover:border-sky-200 hover:shadow-lg"
-              )}>
-              {highlight && (
-                <div className="inline-flex items-center gap-1.5 bg-white/20 text-white text-xs font-bold px-3 py-1 rounded-full w-fit">
-                  <Zap className="h-3 w-3" /> Most Popular
-                </div>
-              )}
-              <div>
-                <p className={cn("text-sm font-semibold mb-1", highlight ? "text-sky-200" : "text-slate-500")}>{name}</p>
-                <div className="flex items-baseline gap-1">
-                  <span className={cn("text-4xl font-extrabold", highlight ? "text-white" : "text-slate-900")}>{price}</span>
-                  <span className={cn("text-sm", highlight ? "text-sky-200" : "text-slate-400")}>{period}</span>
-                </div>
-                <p className={cn("text-sm mt-2", highlight ? "text-sky-100" : "text-slate-500")}>{desc}</p>
-              </div>
-
-              <ul className="space-y-3 flex-1">
-                {features.map((f) => (
-                  <li key={f} className="flex items-start gap-2.5 text-sm">
-                    <CheckCircle2 className={cn("h-4 w-4 mt-0.5 shrink-0", highlight ? "text-sky-200" : "text-sky-500")} />
-                    <span className={highlight ? "text-sky-50" : "text-slate-600"}>{f}</span>
-                  </li>
-                ))}
-              </ul>
-
-              <Link href={ctaHref}
-                className={cn(
-                  "block text-center font-bold py-3 rounded-xl text-sm transition-all",
-                  highlight
-                    ? "bg-white text-sky-700 hover:bg-sky-50"
-                    : "bg-sky-500 hover:bg-sky-600 text-white"
-                )}>
-                {cta}
-              </Link>
-            </div>
-          ))}
-        </div>
+        {isLoading ? (
+          <div className="grid md:grid-cols-3 gap-6 items-stretch max-w-7xl mx-auto">
+            {[1, 2, 3].map((i) => (
+              <Skeleton key={i} className="h-[520px] rounded-3xl" />
+            ))}
+          </div>
+        ) : (
+          <div className="grid md:grid-cols-3 gap-6 items-stretch max-w-7xl mx-auto">
+            {pricingPlans.map((plan) => (
+              <PricingCard key={plan.tier} plan={plan} theme="landing" />
+            ))}
+          </div>
+        )}
       </div>
     </section>
   )

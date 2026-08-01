@@ -49,11 +49,17 @@ const STATUS_OPTIONS = [
 ] as const
 
 const DEFAULT_FORM: CreateExamInput = {
-  title: "", description: "", exam_type: "mock",
+  title: "", description: "", exam_type: "mock", access_tier: "free",
   duration_minutes: 60, pass_mark_pct: 40,
   marks_per_question: 1, negative_marking: false, negative_penalty: 0.25,
   shuffle: true, status: "draft", sources: [],
 }
+
+const TIER_OPTIONS = [
+  { value: "free", label: "Free", desc: "Available to all users" },
+  { value: "pro", label: "Pro", desc: "Requires Pro or Max subscription" },
+  { value: "max", label: "Max", desc: "Requires Max subscription" },
+] as const
 
 // ─── Difficulty pill ─────────────────────────────────────────────────────────
 
@@ -610,6 +616,18 @@ function CreateExamWizard({ examSets, onClose, onCreated }: {
                   </select>
                 </div>
                 <div className="space-y-1.5">
+                  <Label>Access Tier</Label>
+                  <select
+                    className="flex h-10 w-full rounded-[var(--radius)] border border-[var(--input)] bg-transparent px-3 text-sm"
+                    value={form.access_tier}
+                    onChange={(e) => set("access_tier", e.target.value as CreateExamInput["access_tier"])}
+                  >
+                    {TIER_OPTIONS.map((t) => (
+                      <option key={t.value} value={t.value}>{t.label} — {t.desc}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-1.5">
                   <Label>Status</Label>
                   <select
                     className="flex h-10 w-full rounded-[var(--radius)] border border-[var(--input)] bg-transparent px-3 text-sm"
@@ -765,6 +783,21 @@ const columns = (
     ),
   },
   { accessorKey: "exam_type", header: "Type", cell: ({ row }) => <Badge variant="brand" className="capitalize">{row.original.exam_type}</Badge> },
+  {
+    accessorKey: "access_tier",
+    header: "Tier",
+    cell: ({ row }) => {
+      const tier = row.original.access_tier
+      const colors: Record<string, string> = {
+        free: "bg-slate-100 text-slate-700",
+        pro: "bg-amber-100 text-amber-700",
+        max: "bg-violet-100 text-violet-700",
+      }
+      return <Badge className={colors[tier] ?? colors.free}>
+        <span className="capitalize">{tier}</span>
+      </Badge>
+    },
+  },
   {
     accessorKey: "sources",
     header: "Banks",

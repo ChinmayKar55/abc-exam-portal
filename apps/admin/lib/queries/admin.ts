@@ -5,7 +5,9 @@ export interface AdminStats {
   total_questions: number
   total_exams: number
   total_attempts: number
+  active_subscriptions: number
   revenue_captured_paise: number
+  subscription_revenue_captured_paise: number
 }
 
 export interface AdminUser {

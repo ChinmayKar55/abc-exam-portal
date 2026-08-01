@@ -2,24 +2,39 @@
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import {
-  BookOpen, LayoutDashboard, FileText, Trophy, User, LogOut, CreditCard,
+  BookOpen, LayoutDashboard, Trophy, User, LogOut, CreditCard, Crown, Receipt,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useAuthStore } from "@/store/auth"
 import { authQueries } from "@/lib/queries/auth"
+import { useQuery } from "@tanstack/react-query"
+import { subscriptionQueries } from "@/lib/queries/subscription"
+import { useAuthReady } from "@/lib/providers"
 
-const nav = [
-  { href: "/home",    label: "Dashboard",  icon: LayoutDashboard },
-  { href: "/exams",   label: "Exams",      icon: BookOpen },
-  { href: "/results", label: "My Results", icon: Trophy },
-  { href: "/plans",   label: "Plans",      icon: CreditCard },
-  { href: "/profile", label: "Profile",    icon: User },
+const baseNav = [
+  { href: "/home",         label: "Dashboard",  icon: LayoutDashboard },
+  { href: "/exams",        label: "Exams",      icon: BookOpen },
+  { href: "/results",      label: "My Results", icon: Trophy },
+  { href: "/plans",        label: "Packages",   icon: CreditCard },
+  { href: "/subscription", label: "My Plan", icon: Crown },
+  { href: "/orders",       label: "My Orders",  icon: Receipt },
+  { href: "/profile",      label: "Profile",    icon: User },
 ]
 
 export function Sidebar() {
   const pathname = usePathname()
   const router = useRouter()
   const { user, logout } = useAuthStore()
+  const isAuthReady = useAuthReady()
+
+  const { data: mySub } = useQuery({
+    queryKey: ["my-subscription"],
+    queryFn: subscriptionQueries.mySubscription,
+    enabled: isAuthReady,
+  })
+
+  const showPackages = isAuthReady && mySub?.tier !== "pro" && mySub?.tier !== "max"
+  const nav = baseNav.filter((item) => item.href !== "/plans" || showPackages)
 
   const handleLogout = async () => {
     try { await authQueries.logout() } catch {}
@@ -42,7 +57,8 @@ export function Sidebar() {
 
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-0.5">
-        {nav.map(({ href, label, icon: Icon }) => {
+        {nav.map((item) => {
+          const { href, label, icon: Icon } = item
           const active = pathname.startsWith(href)
           return (
             <Link

@@ -2,7 +2,7 @@
 import { useQuery } from "@tanstack/react-query"
 import { useState } from "react"
 import Link from "next/link"
-import { BookOpen, Clock, Target, Search, Lock, CheckCircle2 } from "lucide-react"
+import { BookOpen, Clock, Target, Search, Lock, CheckCircle2, Crown, Zap } from "lucide-react"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -11,27 +11,57 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { EmptyState } from "@/components/shared/EmptyState"
 import { PageHeader } from "@/components/shared/PageHeader"
 import { examQueries } from "@/lib/queries/exams"
-import { planQueries } from "@/lib/queries/plans"
+import { subscriptionQueries } from "@/lib/queries/subscription"
+import { useAuthReady } from "@/lib/providers"
 
 const TYPE_FILTERS = ["all", "mock", "practice"] as const
+
+const tierLabels: Record<string, string> = {
+  free: "Free",
+  pro: "Pro",
+  max: "Max",
+}
+
+const tierIcons: Record<string, React.ComponentType<{ className?: string }>> = {
+  free: CheckCircle2,
+  pro: Zap,
+  max: Crown,
+}
+
+const tierColors: Record<string, string> = {
+  free: "bg-slate-100 text-slate-700",
+  pro: "bg-amber-100 text-amber-700",
+  max: "bg-violet-100 text-violet-700",
+}
 
 export default function ExamsPage() {
   const [filter, setFilter] = useState<string>("all")
   const [search, setSearch] = useState("")
+  const isAuthReady = useAuthReady()
 
   const { data, isLoading } = useQuery({
     queryKey: ["exams", filter],
     queryFn: () => examQueries.list(filter === "all" ? undefined : filter),
   })
 
-  const exams = data ?? []
-
-  const { data: myPlan } = useQuery({
-    queryKey: ["my-plan"],
-    queryFn: planQueries.myPlan,
+  const { data: mySub } = useQuery({
+    queryKey: ["my-subscription"],
+    queryFn: subscriptionQueries.mySubscription,
+    enabled: isAuthReady,
   })
 
-  const planExamIds = new Set(myPlan?.exams?.map((e) => e.id) ?? [])
+  const planTier = mySub?.tier ?? "free"
+  const exams = data ?? []
+
+  const getAccessMeta = (hasAccess: boolean, tier: string) => {
+    if (hasAccess) {
+      if (tier === "free") return { text: "Free", variant: "success" }
+      if (planTier === "max") return { text: "Max plan", variant: "success" }
+      if (planTier === "pro" && tier === "pro") return { text: "Pro plan", variant: "success" }
+      return { text: "Unlocked", variant: "success" }
+    }
+    return { text: `Requires ${tierLabels[tier] ?? "Pro"} plan`, variant: "locked" }
+  }
 
   const filtered = exams.filter((e) =>
     e.title.toLowerCase().includes(search.toLowerCase())
@@ -74,13 +104,22 @@ export default function ExamsPage() {
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {filtered.map((exam) => {
-            const hasAccess = planExamIds.has(exam.id)
+            const hasAccess = exam.has_access
+            const meta = getAccessMeta(hasAccess, exam.access_tier)
+            const TierIcon = tierIcons[exam.access_tier] ?? CheckCircle2
+            const AccessIcon = meta.variant === "success" ? CheckCircle2 : Lock
             return (
               <Card key={exam.id} className="flex flex-col hover:shadow-md transition-shadow">
                 <CardContent className="p-5 flex-1 space-y-3">
                   <div className="flex items-start justify-between gap-2">
                     <h3 className="font-semibold text-sm leading-tight">{exam.title}</h3>
-                    <Badge variant="brand" className="shrink-0 capitalize">{exam.exam_type}</Badge>
+                    <div className="flex gap-1.5 shrink-0">
+                      <Badge variant="brand" className="capitalize">{exam.exam_type}</Badge>
+                      <Badge className={tierColors[exam.access_tier] ?? tierColors.free}>
+                        <TierIcon className="h-3 w-3 mr-1" />
+                        {tierLabels[exam.access_tier] ?? tierLabels.free}
+                      </Badge>
+                    </div>
                   </div>
                   <p className="text-xs text-[var(--muted-foreground)] line-clamp-2">{exam.description}</p>
                   <div className="flex items-center gap-4 text-xs text-[var(--muted-foreground)]">
@@ -88,16 +127,9 @@ export default function ExamsPage() {
                     <span className="flex items-center gap-1"><Clock className="h-3.5 w-3.5" />{exam.duration_minutes} min</span>
                     <span className="flex items-center gap-1"><Target className="h-3.5 w-3.5" />Pass: {exam.pass_mark_pct}%</span>
                   </div>
-                  {!hasAccess && (
-                    <div className="flex items-center gap-1.5 text-xs text-[var(--muted-foreground)] pt-1">
-                      <Lock className="h-3.5 w-3.5" /> Locked — purchase a plan to access
-                    </div>
-                  )}
-                  {hasAccess && (
-                    <div className="flex items-center gap-1.5 text-xs text-[color:var(--color-success-700)] pt-1">
-                      <CheckCircle2 className="h-3.5 w-3.5" /> Included in your plan
-                    </div>
-                  )}
+                  <div className={`flex items-center gap-1.5 text-xs pt-1 ${meta.variant === "success" ? "text-[color:var(--color-success-700)]" : "text-[var(--muted-foreground)]"}`}>
+                    <AccessIcon className="h-3.5 w-3.5" /> {meta.text}
+                  </div>
                 </CardContent>
                 <CardFooter className="p-4 pt-0">
                   <Button asChild className="w-full" size="sm" variant={hasAccess ? "default" : "outline"}>

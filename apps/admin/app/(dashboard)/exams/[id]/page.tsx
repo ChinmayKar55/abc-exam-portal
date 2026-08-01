@@ -46,6 +46,12 @@ const STATUS_OPTIONS = [
   { value: "archived", label: "Archived — Hidden from students" },
 ] as const
 
+const TIER_OPTIONS = [
+  { value: "free", label: "Free — Available to all users" },
+  { value: "pro", label: "Pro — Requires Pro or Max subscription" },
+  { value: "max", label: "Max — Requires Max subscription" },
+] as const
+
 function DiffPill({ d }: { d: string }) {
   return (
     <span className={cn("text-[10px] font-semibold px-1.5 py-0.5 rounded-full",
@@ -322,7 +328,7 @@ export default function ExamEditPage() {
 
   useEffect(() => {
     if (exam) setForm({
-      title: exam.title, description: exam.description, exam_type: exam.exam_type,
+      title: exam.title, description: exam.description, exam_type: exam.exam_type, access_tier: exam.access_tier,
       duration_minutes: exam.duration_minutes, pass_mark_pct: exam.pass_mark_pct,
       marks_per_question: exam.marks_per_question ?? 1,
       negative_marking: exam.negative_marking ?? false,
@@ -366,6 +372,12 @@ export default function ExamEditPage() {
               <Label>Exam Type</Label>
               <select className="flex h-10 w-full rounded-[var(--radius)] border border-[var(--input)] bg-transparent px-3 text-sm" value={form.exam_type ?? "mock"} onChange={(e) => set("exam_type", e.target.value as CreateExamInput["exam_type"])}>
                 {EXAM_TYPES.map((t) => <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>)}
+              </select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Access Tier</Label>
+              <select className="flex h-10 w-full rounded-[var(--radius)] border border-[var(--input)] bg-transparent px-3 text-sm" value={form.access_tier ?? "free"} onChange={(e) => set("access_tier", e.target.value as CreateExamInput["access_tier"])}>
+                {TIER_OPTIONS.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
               </select>
             </div>
             <div className="space-y-1.5">

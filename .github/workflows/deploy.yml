@@ -126,11 +126,43 @@ jobs:
           build-args: |
             NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}
 
+  test-api:
+    needs: changes
+    if: needs.changes.outputs.api == 'true'
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: abc_exam_test
+          POSTGRES_PASSWORD: abc_exam_test
+          POSTGRES_DB: abc_exam_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U abc_exam_test -d abc_exam_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgres://abc_exam_test:abc_exam_test@localhost:5432/abc_exam_test?sslmode=disable
+    defaults:
+      run:
+        working-directory: services/api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: services/api/go.mod
+          cache-dependency-path: services/api/go.sum
+      - name: Run API tests
+        run: go test -race ./...
+
   # ──────────────────────────────────────────────
   # Build Go API
   # ──────────────────────────────────────────────
   build-api:
-    needs: changes
+    needs: [changes, test-api]
     if: needs.changes.outputs.api == 'true'
     runs-on: ubuntu-latest
     permissions:
@@ -176,7 +208,7 @@ jobs:
   # Runs only after all build jobs finish (even if some were skipped)
   # ──────────────────────────────────────────────
   deploy:
-    needs: [build-student, build-admin, build-api]
+    needs: [test-api, build-student, build-admin, build-api]
     if: |
       always() &&
       !contains(needs.*.result, 'failure') &&

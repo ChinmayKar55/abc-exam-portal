@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/joho/godotenv"
@@ -133,13 +134,13 @@ func Load() *Config {
 
 func getEnv(key, fallback string) string {
 	if val := os.Getenv(key); val != "" {
-		return val
+		return strings.TrimSpace(val)
 	}
-	return fallback
+	return strings.TrimSpace(fallback)
 }
 
 func getEnvInt(key string, fallback int) int {
-	if val := os.Getenv(key); val != "" {
+	if val := strings.TrimSpace(os.Getenv(key)); val != "" {
 		if i, err := strconv.Atoi(val); err == nil {
 			return i
 		}
@@ -148,7 +149,7 @@ func getEnvInt(key string, fallback int) int {
 }
 
 func getEnvDuration(key string, fallback time.Duration) time.Duration {
-	if val := os.Getenv(key); val != "" {
+	if val := strings.TrimSpace(os.Getenv(key)); val != "" {
 		if d, err := time.ParseDuration(val); err == nil {
 			return d
 		}

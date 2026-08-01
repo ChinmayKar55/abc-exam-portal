@@ -5,6 +5,7 @@ export interface Plan {
   name: string
   description: string
   price_paise: number
+  duration_days: number
   active: boolean
   exams: PlanExam[]
   materials: PlanMaterial[]
@@ -25,6 +26,7 @@ export interface CreatePlanInput {
   name: string
   description: string
   price_paise: number
+  duration_days: number
   active: boolean
   exam_ids: string[]
   material_ids: string[]

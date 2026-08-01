@@ -105,6 +105,9 @@ func (h *Handler) InitiatePurchase(c *fiber.Ctx) error {
 		if errors.Is(err, ErrAlreadyOwned) {
 			return fiber.NewError(fiber.StatusConflict, err.Error())
 		}
+		if strings.Contains(err.Error(), "razorpay") {
+			return fiber.NewError(fiber.StatusBadGateway, "payment gateway error: "+err.Error())
+		}
 		return err
 	}
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{"success": true, "data": result})
@@ -141,6 +144,8 @@ func (h *Handler) VerifyPayment(c *fiber.Ctx) error {
 			return fiber.NewError(fiber.StatusNotFound, err.Error())
 		case "invalid payment signature":
 			return fiber.NewError(fiber.StatusUnauthorized, err.Error())
+		case ErrPaymentMismatch.Error(), ErrPaymentNotCaptured.Error():
+			return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 		default:
 			return fiber.NewError(fiber.StatusInternalServerError, "payment verification failed")
 		}

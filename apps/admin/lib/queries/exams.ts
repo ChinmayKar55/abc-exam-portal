@@ -12,6 +12,7 @@ export interface Exam {
   title: string
   description: string
   exam_type: "mock" | "practice"
+  access_tier: "free" | "pro" | "max"
   total_questions: number
   duration_minutes: number
   pass_mark_pct: number
@@ -35,13 +36,14 @@ export interface CreateExamInput {
   title: string
   description: string
   exam_type: "mock" | "practice"
+  access_tier: "free" | "pro" | "max"
   duration_minutes: number
   pass_mark_pct: number
   marks_per_question: number
   negative_marking: boolean
   negative_penalty: number
   shuffle: boolean
-  status: "draft" | "active"
+  status: "draft" | "active" | "archived"
   sources: ExamSource[]
 }
 

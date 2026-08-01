@@ -19,6 +19,7 @@ type Exam struct {
 	Title             string       `json:"title"`
 	Description       string       `json:"description"`
 	ExamType          string       `json:"exam_type"`
+	AccessTier        string       `json:"access_tier"` // free | pro | max
 	TotalQuestions    int          `json:"total_questions"` // computed: SUM of sources
 	DurationMinutes   int          `json:"duration_minutes"`
 	PassMarkPct       float64      `json:"pass_mark_pct"`
@@ -29,6 +30,7 @@ type Exam struct {
 	Status            string       `json:"status"` // draft | active | archived
 	Sources           []ExamSource `json:"sources"`
 	CreatedAt         time.Time    `json:"created_at"`
+	HasAccess         bool         `json:"has_access,omitempty"` // computed for the requesting user
 }
 
 // ShuffledQuestion is what the student sees (no correct_option)
@@ -94,6 +96,7 @@ type CreateExamRequest struct {
 	Title            string       `json:"title"`
 	Description      string       `json:"description"`
 	ExamType         string       `json:"exam_type"`
+	AccessTier       string       `json:"access_tier"` // free | pro | max; defaults to free
 	DurationMinutes  int          `json:"duration_minutes"`
 	PassMarkPct      float64      `json:"pass_mark_pct"`
 	MarksPerQuestion float64      `json:"marks_per_question"`
@@ -108,6 +111,7 @@ type UpdateExamRequest struct {
 	Title            string       `json:"title,omitempty"`
 	Description      string       `json:"description,omitempty"`
 	ExamType         string       `json:"exam_type,omitempty"`
+	AccessTier       string       `json:"access_tier,omitempty"` // free | pro | max
 	DurationMinutes  int          `json:"duration_minutes,omitempty"`
 	PassMarkPct      float64      `json:"pass_mark_pct,omitempty"`
 	MarksPerQuestion float64      `json:"marks_per_question,omitempty"`
@@ -121,6 +125,11 @@ type UpdateExamRequest struct {
 type SaveAnswerRequest struct {
 	QuestionID string `json:"question_id"`
 	Answer     string `json:"answer"` // "A"|"B"|"C"|"D"|"" (empty = clear)
+}
+
+type BulkUpdateAccessTierRequest struct {
+	ExamIDs    []string `json:"exam_ids"`
+	AccessTier string   `json:"access_tier"` // free | pro | max
 }
 
 type StartResponse struct {

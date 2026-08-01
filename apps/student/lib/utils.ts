@@ -14,6 +14,14 @@ export function formatCurrency(paise: number): string {
   return `₹${(paise / 100).toLocaleString("en-IN", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`
 }
 
+export function calculateGST(basePaise: number, taxRate = 18): number {
+  return Math.round(basePaise * taxRate / 100)
+}
+
+export function calculateTotal(basePaise: number, taxRate = 18): number {
+  return basePaise + calculateGST(basePaise, taxRate)
+}
+
 export function formatDate(iso: string | null | undefined): string {
   if (!iso) return "—"
   return new Intl.DateTimeFormat("en-IN", { day: "numeric", month: "short", year: "numeric" }).format(new Date(iso))
@@ -76,4 +84,12 @@ export async function exitFullscreen(): Promise<void> {
   }
 
   await Promise.all(exits)
+}
+
+export function formatDurationLabel(days: number): string {
+  if (days <= 0) return "forever"
+  if (days % 365 === 0) return `${days / 365} year${days / 365 === 1 ? "" : "s"}`
+  if (days % 30 === 0) return `${days / 30} month${days / 30 === 1 ? "" : "s"}`
+  if (days < 30) return `${days} day${days === 1 ? "" : "s"}`
+  return `${Math.floor(days / 30)} month${Math.floor(days / 30) === 1 ? "" : "s"}`
 }

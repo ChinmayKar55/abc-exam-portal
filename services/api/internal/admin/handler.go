@@ -86,22 +86,26 @@ func (h *Handler) ListUsers(c *fiber.Ctx) error {
 // GetDashboardStats returns high-level portal statistics.
 func (h *Handler) GetDashboardStats(c *fiber.Ctx) error {
 	type stats struct {
-		TotalUsers       int `json:"total_users"`
-		ActivePlans      int `json:"active_plans"`
-		TotalExams       int `json:"total_exams"`
-		TotalAttempts    int `json:"total_attempts"`
-		GradedAttempts   int `json:"graded_attempts"`
-		TotalQuestions   int `json:"total_questions"`
-		RevenueCapture   int `json:"revenue_captured_paise"`
+		TotalUsers             int `json:"total_users"`
+		ActivePlans            int `json:"active_plans"`
+		ActiveSubscriptions    int `json:"active_subscriptions"`
+		TotalExams             int `json:"total_exams"`
+		TotalAttempts          int `json:"total_attempts"`
+		GradedAttempts         int `json:"graded_attempts"`
+		TotalQuestions         int `json:"total_questions"`
+		RevenueCapture         int `json:"revenue_captured_paise"`
+		SubscriptionRevenue    int `json:"subscription_revenue_captured_paise"`
 	}
 	var s stats
 	_ = h.db.QueryRow(c.Context(), `SELECT COUNT(*) FROM users WHERE role='student'`).Scan(&s.TotalUsers)
 	_ = h.db.QueryRow(c.Context(), `SELECT COUNT(*) FROM user_plans WHERE active=true`).Scan(&s.ActivePlans)
+	_ = h.db.QueryRow(c.Context(), `SELECT COUNT(*) FROM user_subscriptions WHERE active=true`).Scan(&s.ActiveSubscriptions)
 	_ = h.db.QueryRow(c.Context(), `SELECT COUNT(*) FROM exams WHERE status='active'::exam_status`).Scan(&s.TotalExams)
 	_ = h.db.QueryRow(c.Context(), `SELECT COUNT(*) FROM exam_attempts`).Scan(&s.TotalAttempts)
 	_ = h.db.QueryRow(c.Context(), `SELECT COUNT(*) FROM exam_attempts WHERE status='graded'::attempt_status`).Scan(&s.GradedAttempts)
 	_ = h.db.QueryRow(c.Context(), `SELECT COUNT(*) FROM questions WHERE active=true`).Scan(&s.TotalQuestions)
 	_ = h.db.QueryRow(c.Context(), `SELECT COALESCE(SUM(amount_paise),0) FROM payments WHERE status='captured'`).Scan(&s.RevenueCapture)
+	_ = h.db.QueryRow(c.Context(), `SELECT COALESCE(SUM(amount_paise),0) FROM payments WHERE status='captured' AND type='subscription_purchase'`).Scan(&s.SubscriptionRevenue)
 
 	return c.JSON(fiber.Map{"success": true, "data": s})
 }

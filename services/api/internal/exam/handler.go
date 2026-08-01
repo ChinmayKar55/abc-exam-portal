@@ -22,20 +22,36 @@ func NewHandler(svc *Service) *Handler {
 }
 
 func (h *Handler) ListExams(c *fiber.Ctx) error {
+	userID := auth.GetUserID(c)
 	exams, err := h.svc.ListExams(c.Context(), c.Query("exam_type"))
 	if err != nil {
 		return err
+	}
+	ids := make([]string, len(exams))
+	for i := range exams {
+		ids[i] = exams[i].ID
+	}
+	accessMap, err := h.svc.BatchCheckAccess(c.Context(), userID, ids)
+	if err == nil {
+		for i := range exams {
+			exams[i].HasAccess = accessMap[exams[i].ID]
+		}
 	}
 	return c.JSON(fiber.Map{"success": true, "data": exams})
 }
 
 func (h *Handler) GetExam(c *fiber.Ctx) error {
+	userID := auth.GetUserID(c)
 	e, err := h.svc.GetExam(c.Context(), c.Params("id"))
 	if err != nil {
 		if errors.Is(err, ErrExamNotFound) {
 			return fiber.NewError(fiber.StatusNotFound, err.Error())
 		}
 		return err
+	}
+	hasAccess, err := h.svc.CheckAccess(c.Context(), userID, e.ID)
+	if err == nil {
+		e.HasAccess = hasAccess
 	}
 	return c.JSON(fiber.Map{"success": true, "data": e})
 }
@@ -99,6 +115,20 @@ func (h *Handler) PublishExam(c *fiber.Ctx) error {
 		return err
 	}
 	return c.JSON(fiber.Map{"success": true, "message": "exam published"})
+}
+
+func (h *Handler) BulkUpdateAccessTier(c *fiber.Ctx) error {
+	var req BulkUpdateAccessTierRequest
+	if err := c.BodyParser(&req); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, "invalid request body")
+	}
+	if req.AccessTier == "" || (req.AccessTier != "free" && req.AccessTier != "pro" && req.AccessTier != "max") {
+		return fiber.NewError(fiber.StatusBadRequest, "access_tier must be free, pro or max")
+	}
+	if err := h.svc.BulkUpdateAccessTier(c.Context(), req); err != nil {
+		return err
+	}
+	return c.JSON(fiber.Map{"success": true, "message": "exams updated"})
 }
 
 func (h *Handler) StartAttempt(c *fiber.Ctx) error {

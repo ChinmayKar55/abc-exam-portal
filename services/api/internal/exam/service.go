@@ -26,7 +26,7 @@ var (
 	ErrAlreadyInProgress   = errors.New("you already have an active attempt for this exam")
 	ErrAttemptExpired      = errors.New("exam time has expired")
 	ErrAttemptNotActive    = errors.New("attempt is not in progress")
-	ErrNoPlanAccess        = errors.New("active plan required to take exams")
+	ErrNoPlanAccess        = errors.New("active subscription or plan required to take this exam")
 )
 
 type Service struct {
@@ -36,6 +36,85 @@ type Service struct {
 
 func NewService(db *pgxpool.Pool, rdb *redis.Client) *Service {
 	return &Service{db: db, rdb: rdb}
+}
+
+// normalizeAccessTier coerces any casing and defaults missing values to 'free'.
+func normalizeAccessTier(t string) string {
+	t = strings.ToLower(strings.TrimSpace(t))
+	switch t {
+	case "pro", "max":
+		return t
+	default:
+		return "free"
+	}
+}
+
+// CheckAccess returns true when the user may start this exam.
+func (s *Service) CheckAccess(ctx context.Context, userID, examID string) (bool, error) {
+	var hasAccess bool
+	err := s.db.QueryRow(ctx,
+		`SELECT EXISTS(
+			SELECT 1 FROM exams e
+			WHERE e.id = $2 AND (
+				e.access_tier = 'free'
+				OR (e.access_tier = 'pro' AND EXISTS(
+					SELECT 1 FROM user_subscriptions us
+					WHERE us.user_id = $1 AND us.active = true AND us.expires_at > NOW() AND us.tier IN ('pro','max')
+				))
+				OR (e.access_tier = 'max' AND EXISTS(
+					SELECT 1 FROM user_subscriptions us
+					WHERE us.user_id = $1 AND us.active = true AND us.expires_at > NOW() AND us.tier = 'max'
+				))
+				OR EXISTS(
+					SELECT 1 FROM user_plans up
+					JOIN plan_exams pe ON pe.plan_id = up.plan_id
+					WHERE up.user_id = $1 AND up.active = true AND (up.expires_at IS NULL OR up.expires_at > NOW()) AND pe.exam_id = $2
+				)
+			)
+		)`, userID, examID,
+	).Scan(&hasAccess)
+	return hasAccess, err
+}
+
+// BatchCheckAccess computes access for many exams in one query.
+func (s *Service) BatchCheckAccess(ctx context.Context, userID string, examIDs []string) (map[string]bool, error) {
+	if len(examIDs) == 0 {
+		return map[string]bool{}, nil
+	}
+	rows, err := s.db.Query(ctx,
+		`SELECT e.id,
+			(e.access_tier = 'free'
+			OR (e.access_tier = 'pro' AND EXISTS(
+				SELECT 1 FROM user_subscriptions us
+				WHERE us.user_id = $1 AND us.active = true AND us.expires_at > NOW() AND us.tier IN ('pro','max')
+			))
+			OR (e.access_tier = 'max' AND EXISTS(
+				SELECT 1 FROM user_subscriptions us
+				WHERE us.user_id = $1 AND us.active = true AND us.expires_at > NOW() AND us.tier = 'max'
+			))
+			OR EXISTS(
+				SELECT 1 FROM user_plans up
+				JOIN plan_exams pe ON pe.plan_id = up.plan_id
+				WHERE up.user_id = $1 AND up.active = true AND (up.expires_at IS NULL OR up.expires_at > NOW()) AND pe.exam_id = e.id
+			)
+		) as has_access
+		FROM exams e
+		WHERE e.id = ANY($2)`, userID, examIDs)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := map[string]bool{}
+	for rows.Next() {
+		var id string
+		var ok bool
+		if err := rows.Scan(&id, &ok); err != nil {
+			return nil, err
+		}
+		out[id] = ok
+	}
+	return out, nil
 }
 
 // loadSources fetches question bank sources for a list of exam IDs.
@@ -101,7 +180,7 @@ func (s *Service) setSources(ctx context.Context, examID string, sources []ExamS
 
 // ListExams returns published exams, optionally filtered by exam_type.
 func (s *Service) ListExams(ctx context.Context, examType string) ([]Exam, error) {
-	q := `SELECT e.id, e.title, e.description, e.exam_type,
+	q := `SELECT e.id, e.title, e.description, e.exam_type, e.access_tier,
 	             e.total_questions, e.duration_minutes, e.pass_mark_pct,
 	             e.marks_per_question, e.negative_marking, e.negative_penalty,
 	             e.shuffle, e.status::TEXT, e.created_at
@@ -124,7 +203,7 @@ func (s *Service) ListExams(ctx context.Context, examType string) ([]Exam, error
 	var ids []string
 	for rows.Next() {
 		var e Exam
-		if err := rows.Scan(&e.ID, &e.Title, &e.Description, &e.ExamType,
+		if err := rows.Scan(&e.ID, &e.Title, &e.Description, &e.ExamType, &e.AccessTier,
 			&e.TotalQuestions, &e.DurationMinutes, &e.PassMarkPct,
 			&e.MarksPerQuestion, &e.NegativeMarking, &e.NegativePenalty,
 			&e.Shuffle, &e.Status, &e.CreatedAt); err != nil {
@@ -146,7 +225,7 @@ func (s *Service) ListExams(ctx context.Context, examType string) ([]Exam, error
 // ListAllExams returns all exams regardless of status (admin use).
 func (s *Service) ListAllExams(ctx context.Context) ([]Exam, error) {
 	rows, err := s.db.Query(ctx,
-		`SELECT id, title, description, exam_type,
+		`SELECT id, title, description, exam_type, access_tier,
 		        total_questions, duration_minutes, pass_mark_pct,
 		        marks_per_question, negative_marking, negative_penalty,
 		        shuffle, status::TEXT, created_at
@@ -160,7 +239,7 @@ func (s *Service) ListAllExams(ctx context.Context) ([]Exam, error) {
 	var ids []string
 	for rows.Next() {
 		var e Exam
-		if err := rows.Scan(&e.ID, &e.Title, &e.Description, &e.ExamType,
+		if err := rows.Scan(&e.ID, &e.Title, &e.Description, &e.ExamType, &e.AccessTier,
 			&e.TotalQuestions, &e.DurationMinutes, &e.PassMarkPct,
 			&e.MarksPerQuestion, &e.NegativeMarking, &e.NegativePenalty,
 			&e.Shuffle, &e.Status, &e.CreatedAt); err != nil {
@@ -183,12 +262,12 @@ func (s *Service) ListAllExams(ctx context.Context) ([]Exam, error) {
 func (s *Service) GetExam(ctx context.Context, id string) (*Exam, error) {
 	var e Exam
 	err := s.db.QueryRow(ctx,
-		`SELECT id, title, description, exam_type,
+		`SELECT id, title, description, exam_type, access_tier,
 		        total_questions, duration_minutes, pass_mark_pct,
 		        marks_per_question, negative_marking, negative_penalty,
 		        shuffle, status::TEXT, created_at
 		 FROM exams WHERE id = $1`, id,
-	).Scan(&e.ID, &e.Title, &e.Description, &e.ExamType,
+	).Scan(&e.ID, &e.Title, &e.Description, &e.ExamType, &e.AccessTier,
 		&e.TotalQuestions, &e.DurationMinutes, &e.PassMarkPct,
 		&e.MarksPerQuestion, &e.NegativeMarking, &e.NegativePenalty,
 		&e.Shuffle, &e.Status, &e.CreatedAt)
@@ -224,20 +303,21 @@ func (s *Service) CreateExam(ctx context.Context, req CreateExamRequest) (*Exam,
 	if initStatus != "active" && initStatus != "archived" {
 		initStatus = "draft"
 	}
+	accessTier := normalizeAccessTier(req.AccessTier)
 	var e Exam
 	err := s.db.QueryRow(ctx,
 		`INSERT INTO exams (title, description, exam_type, total_questions, duration_minutes, pass_mark_pct,
-		                   marks_per_question, negative_marking, negative_penalty, shuffle, status)
-		 VALUES ($1,$2,$3::exam_type,0,$4,$5,$6,$7,$8,$9,$10::exam_status)
-		 RETURNING id, title, description, exam_type,
+		                   marks_per_question, negative_marking, negative_penalty, shuffle, status, access_tier)
+		 VALUES ($1,$2,$3::exam_type,0,$4,$5,$6,$7,$8,$9,$10::exam_status,$11)
+		 RETURNING id, title, description, exam_type, access_tier,
 		           total_questions, duration_minutes, pass_mark_pct,
 		           marks_per_question, negative_marking, negative_penalty,
 		           shuffle, status::TEXT, created_at`,
 		req.Title, req.Description, req.ExamType,
 		req.DurationMinutes, req.PassMarkPct,
 		req.MarksPerQuestion, req.NegativeMarking, req.NegativePenalty,
-		req.Shuffle, initStatus,
-	).Scan(&e.ID, &e.Title, &e.Description, &e.ExamType,
+		req.Shuffle, initStatus, accessTier,
+	).Scan(&e.ID, &e.Title, &e.Description, &e.ExamType, &e.AccessTier,
 		&e.TotalQuestions, &e.DurationMinutes, &e.PassMarkPct,
 		&e.MarksPerQuestion, &e.NegativeMarking, &e.NegativePenalty,
 		&e.Shuffle, &e.Status, &e.CreatedAt)
@@ -269,17 +349,18 @@ func (s *Service) UpdateExam(ctx context.Context, id string, req UpdateExamReque
 		     negative_marking = COALESCE($8, negative_marking),
 		     negative_penalty = COALESCE(NULLIF($9, 0.0), negative_penalty),
 		     shuffle = COALESCE($10, shuffle),
-		     status = CASE WHEN $11 != '' THEN $11::exam_status ELSE status END
+		     status = CASE WHEN $11 != '' THEN $11::exam_status ELSE status END,
+		     access_tier = COALESCE(NULLIF($12, ''), access_tier)
 		 WHERE id = $1
-		 RETURNING id, title, description, exam_type,
+		 RETURNING id, title, description, exam_type, access_tier,
 		           total_questions, duration_minutes, pass_mark_pct,
 		           marks_per_question, negative_marking, negative_penalty,
 		           shuffle, status::TEXT, created_at`,
 		id, req.Title, req.Description, req.ExamType,
 		req.DurationMinutes, req.PassMarkPct,
 		req.MarksPerQuestion, req.NegativeMarking, req.NegativePenalty,
-		req.Shuffle, req.Status,
-	).Scan(&e.ID, &e.Title, &e.Description, &e.ExamType,
+		req.Shuffle, req.Status, req.AccessTier,
+	).Scan(&e.ID, &e.Title, &e.Description, &e.ExamType, &e.AccessTier,
 		&e.TotalQuestions, &e.DurationMinutes, &e.PassMarkPct,
 		&e.MarksPerQuestion, &e.NegativeMarking, &e.NegativePenalty,
 		&e.Shuffle, &e.Status, &e.CreatedAt)
@@ -301,6 +382,21 @@ func (s *Service) UpdateExam(ctx context.Context, id string, req UpdateExamReque
 		e.TotalQuestions += src.QuestionCount
 	}
 	return &e, nil
+}
+
+// BulkUpdateAccessTier sets the access_tier for a list of exams (admin only).
+func (s *Service) BulkUpdateAccessTier(ctx context.Context, req BulkUpdateAccessTierRequest) error {
+	if req.AccessTier != "free" && req.AccessTier != "pro" && req.AccessTier != "max" {
+		return fmt.Errorf("invalid access tier: %s", req.AccessTier)
+	}
+	if len(req.ExamIDs) == 0 {
+		return nil
+	}
+
+	_, err := s.db.Exec(ctx,
+		`UPDATE exams SET access_tier = $1 WHERE id = ANY($2)`,
+		req.AccessTier, req.ExamIDs)
+	return err
 }
 
 // DeleteExam removes an exam and its sources (admin only).
@@ -329,22 +425,17 @@ func (s *Service) PublishExam(ctx context.Context, id string) error {
 
 // StartAttempt begins a new exam attempt for a user.
 func (s *Service) StartAttempt(ctx context.Context, userID, examID string) (*StartResponse, error) {
-	// Verify active plan includes this exam
-	var hasAccess bool
-	_ = s.db.QueryRow(ctx,
-		`SELECT EXISTS(
-			SELECT 1 FROM user_plans up
-			JOIN plan_exams pe ON pe.plan_id = up.plan_id
-			WHERE up.user_id=$1 AND up.active=true AND pe.exam_id=$2
-		)`, userID, examID,
-	).Scan(&hasAccess)
-	if !hasAccess {
-		return nil, ErrNoPlanAccess
-	}
-
 	exam, err := s.GetExam(ctx, examID)
 	if err != nil {
 		return nil, err
+	}
+
+	hasAccess, err := s.CheckAccess(ctx, userID, examID)
+	if err != nil {
+		return nil, err
+	}
+	if !hasAccess {
+		return nil, ErrNoPlanAccess
 	}
 
 	// Check for existing active attempt

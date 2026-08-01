@@ -11,6 +11,8 @@ export interface Exam {
   title: string
   description: string
   exam_type: string
+  access_tier: "free" | "pro" | "max"
+  has_access: boolean
   total_questions: number
   duration_minutes: number
   pass_mark_pct: number

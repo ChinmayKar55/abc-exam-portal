@@ -14,11 +14,21 @@ const (
 
 func Middleware(jwtSecret string) fiber.Handler {
 	return func(c *fiber.Ctx) error {
+		// Accept the access token from the Authorization header, or fall back to
+		// the client-synced abc-auth-token cookie. This makes the first request
+		// after a hard refresh / fresh login reliable even if the client-side
+		// store has not finished rehydrating.
+		var tokenStr string
 		header := c.Get("Authorization")
-		if header == "" || !strings.HasPrefix(header, "Bearer ") {
-			return fiber.NewError(fiber.StatusUnauthorized, "missing or invalid authorization header")
+		if header != "" && strings.HasPrefix(header, "Bearer ") {
+			tokenStr = strings.TrimPrefix(header, "Bearer ")
+		} else {
+			tokenStr = c.Cookies("abc-auth-token")
 		}
-		tokenStr := strings.TrimPrefix(header, "Bearer ")
+
+		if tokenStr == "" {
+			return fiber.NewError(fiber.StatusUnauthorized, "missing or invalid authorization token")
+		}
 
 		claims, err := validateAccessToken(tokenStr, jwtSecret)
 		if err != nil {

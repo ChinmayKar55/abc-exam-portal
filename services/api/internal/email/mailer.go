@@ -65,8 +65,81 @@ func (m *Mailer) SendWelcome(to, name string) error {
 	return m.send(to, subject, body)
 }
 
+func FormatRupees(paise int) string {
+	return fmt.Sprintf("₹%.2f", float64(paise)/100.0)
+}
+
+func (m *Mailer) SendPaymentReceipt(to, name, itemName, orderID, paymentID, amount, base, tax, itemType, tier, duration, date string) error {
+	subject := brandName + " — Payment Receipt"
+	body := fmt.Sprintf(`Hi %s,
+
+Thank you for your purchase.
+
+Item: %s
+Order ID: %s
+Payment ID: %s
+Date: %s
+
+Price (excl. tax): %s
+GST (18%%): %s
+Total paid: %s
+
+%s
+
+You can view your receipt and manage your orders in your account.
+
+— %s`,
+		name, itemName, orderID, paymentID, date, base, tax, amount, itemDetails(itemType, tier, duration), brandName)
+	return m.send(to, subject, body)
+}
+
+func itemDetails(itemType, tier, duration string) string {
+	if itemType == "subscription" {
+		return fmt.Sprintf("Subscription tier: %s\nValid until: %s", tier, duration)
+	}
+	if duration != "" {
+		return fmt.Sprintf("Package duration: %s", duration)
+	}
+	return ""
+}
+
 func (m *Mailer) SendPlanActivation(to, name, planName string) error {
 	subject := brandName + " — Plan Activated"
 	body := fmt.Sprintf("Hi %s,\n\nYour %s plan has been activated successfully. You now have full access to your exams.\n\nLog in to start: %s\n\n— %s", name, planName, "http://localhost:3000/exams", brandName)
+	return m.send(to, subject, body)
+}
+
+func (m *Mailer) SendSubscriptionActivated(to, name, tier, expiresAt string) error {
+	subject := brandName + " — Subscription Activated"
+	body := fmt.Sprintf("Hi %s,\n\nYour %s subscription has been activated. It is valid until %s.\n\nLog in to explore all included exams: %s\n\n— %s",
+		name, tier, expiresAt, "http://localhost:3000/exams", brandName)
+	return m.send(to, subject, body)
+}
+
+func (m *Mailer) SendSubscriptionExpiryWarning(to, name, tier, expiresAt string) error {
+	subject := brandName + " — Subscription Expiring Soon"
+	body := fmt.Sprintf("Hi %s,\n\nYour %s subscription will expire on %s. Renew it before expiry to continue enjoying uninterrupted access.\n\nRenew now: %s\n\n— %s",
+		name, tier, expiresAt, "http://localhost:3000/subscription", brandName)
+	return m.send(to, subject, body)
+}
+
+func (m *Mailer) SendSubscriptionExpired(to, name, tier string) error {
+	subject := brandName + " — Subscription Expired"
+	body := fmt.Sprintf("Hi %s,\n\nYour %s subscription has expired. Renew it to regain access to premium exams and features.\n\nRenew now: %s\n\n— %s",
+		name, tier, "http://localhost:3000/subscription", brandName)
+	return m.send(to, subject, body)
+}
+
+func (m *Mailer) SendPlanExpiryWarning(to, name, planName, expiresAt string) error {
+	subject := brandName + " — Package Expiring Soon"
+	body := fmt.Sprintf("Hi %s,\n\nYour %s package will expire on %s. Renew it before expiry to continue enjoying uninterrupted access to its exams and materials.\n\nRenew now: %s\n\n— %s",
+		name, planName, expiresAt, "http://localhost:3000/plans", brandName)
+	return m.send(to, subject, body)
+}
+
+func (m *Mailer) SendPlanExpired(to, name, planName string) error {
+	subject := brandName + " — Package Expired"
+	body := fmt.Sprintf("Hi %s,\n\nYour %s package has expired. Renew it to regain access to its exams and materials.\n\nRenew now: %s\n\n— %s",
+		name, planName, "http://localhost:3000/plans", brandName)
 	return m.send(to, subject, body)
 }
