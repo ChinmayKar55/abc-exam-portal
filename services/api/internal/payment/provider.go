@@ -27,12 +27,14 @@ type PaymentDetails struct {
 }
 
 type WebhookEvent struct {
-	Event     string
-	OrderID   string
-	PaymentID string
-	Amount    int
-	Currency  string
-	Status    string
+	Event            string
+	OrderID          string
+	PaymentID        string
+	Amount           int
+	Currency         string
+	Status           string
+	ErrorCode        string
+	ErrorDescription string
 }
 
 type Provider interface {

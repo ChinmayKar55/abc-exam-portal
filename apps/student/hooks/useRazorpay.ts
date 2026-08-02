@@ -96,6 +96,7 @@ export function useRazorpay() {
       })
 
       razorpay.on("payment.failed", () => {
+        razorpay.close()
         options.onError?.()
       })
 

@@ -158,11 +158,13 @@ func (r *RazorpayProvider) ParseWebhookEvent(payload []byte) (*WebhookEvent, err
 		Payload struct {
 			Payment struct {
 				Entity struct {
-					ID       string `json:"id"`
-					OrderID  string `json:"order_id"`
-					Amount   int    `json:"amount"`
-					Currency string `json:"currency"`
-					Status   string `json:"status"`
+					ID               string `json:"id"`
+					OrderID          string `json:"order_id"`
+					Amount           int    `json:"amount"`
+					Currency         string `json:"currency"`
+					Status           string `json:"status"`
+					ErrorCode        string `json:"error_code"`
+					ErrorDescription string `json:"error_description"`
 				} `json:"entity"`
 			} `json:"payment"`
 		} `json:"payload"`
@@ -171,11 +173,13 @@ func (r *RazorpayProvider) ParseWebhookEvent(payload []byte) (*WebhookEvent, err
 		return nil, err
 	}
 	return &WebhookEvent{
-		Event:     raw.Event,
-		OrderID:   raw.Payload.Payment.Entity.OrderID,
-		PaymentID: raw.Payload.Payment.Entity.ID,
-		Amount:    raw.Payload.Payment.Entity.Amount,
-		Currency:  raw.Payload.Payment.Entity.Currency,
-		Status:    raw.Payload.Payment.Entity.Status,
+		Event:            raw.Event,
+		OrderID:          raw.Payload.Payment.Entity.OrderID,
+		PaymentID:        raw.Payload.Payment.Entity.ID,
+		Amount:           raw.Payload.Payment.Entity.Amount,
+		Currency:         raw.Payload.Payment.Entity.Currency,
+		Status:           raw.Payload.Payment.Entity.Status,
+		ErrorCode:        raw.Payload.Payment.Entity.ErrorCode,
+		ErrorDescription: raw.Payload.Payment.Entity.ErrorDescription,
 	}, nil
 }

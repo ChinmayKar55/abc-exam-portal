@@ -377,6 +377,12 @@ func (s *Service) HandleWebhook(ctx context.Context, payload []byte, signature s
 
 	if event.Event != "payment.captured" {
 		if event.Event == "payment.failed" && event.Status == "failed" && event.OrderID != "" {
+			log.Warn().
+				Str("order_id", event.OrderID).
+				Str("payment_id", event.PaymentID).
+				Str("error_code", event.ErrorCode).
+				Str("error_description", event.ErrorDescription).
+				Msg("Payment failed")
 			_, _ = s.db.Exec(ctx,
 				`UPDATE payments SET status = 'failed', updated_at = NOW()
 				 WHERE razorpay_order_id = $1 AND status = 'pending'`, event.OrderID)
