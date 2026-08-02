@@ -24,7 +24,7 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
 import { PageHeader } from "@/components/shared/PageHeader"
-import { planQueries, type Plan, type PlanExam, type PlanMaterial, type PurchaseResult } from "@/lib/queries/plans"
+import { planQueries, paymentQueries, type Plan, type PlanExam, type PlanMaterial, type PurchaseResult } from "@/lib/queries/plans"
 import {
   subscriptionQueries,
   type SubscriptionPlan,
@@ -174,7 +174,13 @@ export default function CheckoutPage() {
         type === "subscription"
           ? selectedTier?.name ?? "Subscription"
           : selectedPlan?.name ?? "Package"
-      openCheckout({
+
+      let pollTimer: ReturnType<typeof setInterval> | undefined
+      const stopPolling = () => {
+        if (pollTimer) clearInterval(pollTimer)
+      }
+
+      const instance = openCheckout({
         key: data.key_id,
         amount: data.total_paise ?? data.amount_paise,
         currency: data.currency,
@@ -186,13 +192,37 @@ export default function CheckoutPage() {
           email: authUser?.email ?? "",
         },
         theme: { color: type === "subscription" && tier === "max" ? "#7c3aed" : "#0284c7" },
-        onSuccess: handleRazorpaySuccess(data),
-        onDismiss: () => setIsPaying(false),
+        onSuccess: (response) => {
+          stopPolling()
+          handleRazorpaySuccess(data)(response)
+        },
+        onDismiss: () => {
+          stopPolling()
+          setIsPaying(false)
+        },
         onError: () => {
+          stopPolling()
           setIsPaying(false)
           setErrorMsg("Payment failed or was cancelled. Please try again.")
         },
       })
+
+      // Active detection: some rejections (e.g. Razorpay-side risk/website checks)
+      // never notify the widget itself, so poll our own backend — which learns
+      // of the failure via Razorpay's server-to-server webhook — every 4s and
+      // force-close the widget as soon as it's confirmed failed.
+      if (instance) {
+        pollTimer = setInterval(() => {
+          paymentQueries.getByOrderId(data.order_id).then((payment) => {
+            if (payment.status === "failed") {
+              stopPolling()
+              instance.forceClose()
+            }
+          }).catch(() => {
+            // Ignore transient poll errors (e.g. payment row not yet created).
+          })
+        }, 4000)
+      }
       return
     }
 

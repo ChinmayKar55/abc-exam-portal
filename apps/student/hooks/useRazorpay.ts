@@ -132,10 +132,20 @@ export function useRazorpay() {
           razorpay.close()
           options.onError?.()
         })
-      }, 3 * 60 * 1000)
+      }, 45 * 1000)
 
       log("calling razorpay.open()")
       razorpay.open()
+
+      return {
+        forceClose: () => {
+          log("forceClose() called externally")
+          settle("external forceClose", () => {
+            razorpay.close()
+            options.onError?.()
+          })
+        },
+      }
     },
     []
   )

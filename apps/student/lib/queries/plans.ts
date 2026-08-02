@@ -62,6 +62,19 @@ export interface VerifyPaymentResponse {
   message?: string
 }
 
+export interface PaymentStatus {
+  id: string
+  razorpay_order_id: string
+  razorpay_payment_id: string
+  status: "pending" | "captured" | "failed"
+}
+
+export const paymentQueries = {
+  getByOrderId: (orderId: string) =>
+    apiGet<{ data: PaymentStatus; success: boolean }>(`my/payments/${orderId}`)
+      .then((r) => r.data),
+}
+
 export const planQueries = {
   list: () =>
     apiGet<{ data: Plan[]; success: boolean }>("plans")
