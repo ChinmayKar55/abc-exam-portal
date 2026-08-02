@@ -34,6 +34,7 @@ import { useRazorpay } from "@/hooks/useRazorpay"
 import { useAuthStore } from "@/store/auth"
 import { useAuthReady } from "@/lib/providers"
 import { formatCurrency, calculateGST } from "@/lib/utils"
+import { PolicyModal, type PolicyType } from "@/components/shared/PolicyModal"
 
 const supportEmail = "abcsupportindia@gmail.com"
 const supportPhone = "+91 89848 58895"
@@ -54,6 +55,7 @@ export default function CheckoutPage() {
   const [agreed, setAgreed] = useState(false)
   const [errorMsg, setErrorMsg] = useState("")
   const [isPaying, setIsPaying] = useState(false)
+  const [openPolicy, setOpenPolicy] = useState<PolicyType | null>(null)
 
   const { data: plans = [], isLoading: plansLoading } = useQuery({
     queryKey: ["plans"],
@@ -262,6 +264,7 @@ export default function CheckoutPage() {
         : "Lifetime access"
 
   return (
+    <>
     <div className="space-y-6 max-w-3xl mx-auto">
       <PageHeader title="Checkout" description="Review your order and pay securely." />
 
@@ -430,10 +433,28 @@ export default function CheckoutPage() {
                 />
                 <span className="text-[var(--muted-foreground)]">
                   I agree to the{" "}
-                  <a href="/" target="_blank" rel="noopener noreferrer" className="underline hover:text-[var(--primary)]">Terms & Conditions</a>,{" "}
-                  <a href="/" target="_blank" rel="noopener noreferrer" className="underline hover:text-[var(--primary)]">Privacy Policy</a>{" "}
+                  <button
+                    type="button"
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); setOpenPolicy("terms") }}
+                    className="underline hover:text-[var(--primary)]"
+                  >
+                    Terms & Conditions
+                  </button>,{" "}
+                  <button
+                    type="button"
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); setOpenPolicy("privacy") }}
+                    className="underline hover:text-[var(--primary)]"
+                  >
+                    Privacy Policy
+                  </button>{" "}
                   and{" "}
-                  <a href="/" target="_blank" rel="noopener noreferrer" className="underline hover:text-[var(--primary)]">Refund Policy</a>.
+                  <button
+                    type="button"
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); setOpenPolicy("refund") }}
+                    className="underline hover:text-[var(--primary)]"
+                  >
+                    Refund Policy
+                  </button>.
                 </span>
               </label>
 
@@ -464,5 +485,7 @@ export default function CheckoutPage() {
         </div>
       </div>
     </div>
+    <PolicyModal type={openPolicy} onClose={() => setOpenPolicy(null)} />
+    </>
   )
 }
