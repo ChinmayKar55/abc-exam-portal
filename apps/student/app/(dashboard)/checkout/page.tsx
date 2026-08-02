@@ -1,7 +1,7 @@
 "use client"
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import {
   Lock,
@@ -38,6 +38,7 @@ import { PolicyModal, type PolicyType } from "@/components/shared/PolicyModal"
 
 const supportEmail = "abcsupportindia@gmail.com"
 const supportPhone = "+91 89848 58895"
+const CHECKOUT_ERROR_STORAGE_KEY = "checkout_error_msg"
 
 export default function CheckoutPage() {
   const router = useRouter()
@@ -56,6 +57,16 @@ export default function CheckoutPage() {
   const [errorMsg, setErrorMsg] = useState("")
   const [isPaying, setIsPaying] = useState(false)
   const [openPolicy, setOpenPolicy] = useState<PolicyType | null>(null)
+
+  // Restore the error message after a hard reload triggered to force-destroy
+  // a stuck Razorpay widget (see CHECKOUT_ERROR_STORAGE_KEY usage below).
+  useEffect(() => {
+    const stored = sessionStorage.getItem(CHECKOUT_ERROR_STORAGE_KEY)
+    if (stored) {
+      setErrorMsg(stored)
+      sessionStorage.removeItem(CHECKOUT_ERROR_STORAGE_KEY)
+    }
+  }, [])
 
   const { data: plans = [], isLoading: plansLoading } = useQuery({
     queryKey: ["plans"],
@@ -203,7 +214,11 @@ export default function CheckoutPage() {
         onError: () => {
           stopPolling()
           setIsPaying(false)
-          setErrorMsg("Payment failed or was cancelled. Please try again.")
+          sessionStorage.setItem(
+            CHECKOUT_ERROR_STORAGE_KEY,
+            "Payment failed or was cancelled. Please try again."
+          )
+          window.location.reload()
         },
       })
 
@@ -217,6 +232,16 @@ export default function CheckoutPage() {
             if (payment.status === "failed") {
               stopPolling()
               instance.forceClose()
+              // razorpay.close() does not reliably hide the widget for some
+              // silent rejections (e.g. website-mismatch) — its DOM is
+              // injected directly onto document.body, outside React's tree,
+              // so only a hard reload is guaranteed to destroy it. The error
+              // message survives the reload via sessionStorage.
+              sessionStorage.setItem(
+                CHECKOUT_ERROR_STORAGE_KEY,
+                "Payment failed or was cancelled. Please try again."
+              )
+              window.location.reload()
             }
           }).catch(() => {
             // Ignore transient poll errors (e.g. payment row not yet created).
