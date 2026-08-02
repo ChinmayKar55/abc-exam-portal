@@ -29,7 +29,7 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: () => !!get().accessToken && !!get().user,
     }),
     {
-      name: "abc-admin-auth",
+      name: "osssc-admin-auth",
       storage: createJSONStorage(() =>
         typeof window !== "undefined" ? localStorage : {
           getItem: () => null,

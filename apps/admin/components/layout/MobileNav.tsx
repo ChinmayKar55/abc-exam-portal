@@ -2,7 +2,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { Menu, X, ShieldCheck, LayoutDashboard, BookOpen, Users, ClipboardList, CreditCard, Package, Crown, LogOut, Library } from "lucide-react"
+import { Menu, X, LayoutDashboard, BookOpen, Users, ClipboardList, CreditCard, Package, Crown, LogOut, Library } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useAuthStore } from "@/store/auth"
 import { authQueries } from "@/lib/queries/auth"
@@ -33,10 +33,13 @@ export function AdminMobileNav() {
     <>
       <header className="lg:hidden fixed top-0 inset-x-0 z-50 flex h-14 items-center justify-between border-b border-[var(--border)] bg-[var(--card)] px-4">
         <div className="flex items-center gap-2">
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg gradient-brand">
-            <ShieldCheck className="h-3.5 w-3.5 text-white" />
-          </div>
-          <span className="font-bold text-sm">ABC Admin</span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/osssc-logo.png"
+            alt="OSSSC Online"
+            className="h-8 w-8 object-contain drop-shadow-md shrink-0"
+          />
+          <span className="font-bold text-sm">OSSSC ONLINE</span>
         </div>
         <button onClick={() => setOpen(true)} className="flex h-9 w-9 items-center justify-center rounded-lg hover:bg-[var(--secondary)]">
           <Menu className="h-5 w-5" />
@@ -51,10 +54,13 @@ export function AdminMobileNav() {
       )}>
         <div className="flex h-14 items-center justify-between px-5 border-b border-[var(--sidebar-border)]">
           <div className="flex items-center gap-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg gradient-brand">
-              <ShieldCheck className="h-3.5 w-3.5 text-white" />
-            </div>
-            <span className="font-bold text-white text-sm">ABC Admin</span>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/osssc-logo.png"
+              alt="OSSSC Online"
+              className="h-8 w-8 object-contain drop-shadow-md shrink-0"
+            />
+            <span className="font-bold text-white text-sm">OSSSC ONLINE</span>
           </div>
           <button onClick={() => setOpen(false)} className="text-[var(--sidebar-fg)] hover:text-white">
             <X className="h-5 w-5" />

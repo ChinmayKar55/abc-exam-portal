@@ -53,7 +53,7 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-8">
-      <PageHeader title="Dashboard" description="Overview of your exam portal" />
+      <PageHeader title="Dashboard" description="Overview of OSSSC Online" />
 
       {/* Stats grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

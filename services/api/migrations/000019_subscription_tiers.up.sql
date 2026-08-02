@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS subscription_plans (
 
 INSERT INTO subscription_plans (tier, name, description, price_paise, duration_days) VALUES
   ('pro', 'Pro Plan', 'Access all Pro exams for 7 days', 19900, 7),
-  ('max', 'Max Plan', 'Access all Pro + Max exams for 3 months', 39900, 90)
+  ('max', 'Max Plan', 'Access all Pro + Max exams for 3 months', 99900, 90)
 ON CONFLICT (tier) DO NOTHING;
 
 -- 3. Active subscriptions per user

@@ -516,7 +516,7 @@ const DEFAULT_API_PLANS: SubscriptionPlan[] = [
     tier: "max",
     name: "Max",
     description: tierDescriptions.max,
-    price_paise: 39900,
+    price_paise: 99900,
     duration_days: 90,
     duration_label: "3 months",
     features: [],

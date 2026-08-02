@@ -1,6 +1,6 @@
 # Subscription Tier Restructure — Free / Pro / Max
 
-Restructure the existing single-purchase package system into a three-tier subscription model (Free, Pro ₹199/week, Max ₹399/3 months) with plan expiry, upgrade support, and differentiated UI per tier.
+Restructure the existing single-purchase package system into a three-tier subscription model (Free, Pro ₹199/week, Max ₹999/3 months) with plan expiry, upgrade support, and differentiated UI per tier.
 
 ---
 
@@ -9,10 +9,10 @@ Restructure the existing single-purchase package system into a three-tier subscr
 | Rule | Decision |
 |---|---|
 | **Renewal** | Manual re-subscribe — no auto-renewal. Plans just expire. |
-| **Upgrade** | Pro → Max allowed mid-cycle (pay full ₹399, remaining Pro days ignored). |
+| **Upgrade** | Pro → Max allowed mid-cycle (pay full ₹999, remaining Pro days ignored). |
 | **Exam visibility** | All users see all exams. Locked exams show lock icon + "Upgrade to Pro/Max" or "Buy package". |
 | **Packages tab** | Hidden for Max users. Visible for Free & Pro users; exams already covered by active plan show "Included in your plan" (not purchasable). |
-| **Tiers** | **Free** = default (no subscription); **Pro** = ₹199/7 days; **Max** = ₹399/90 days. |
+| **Tiers** | **Free** = default (no subscription); **Pro** = ₹199/7 days; **Max** = ₹999/90 days. |
 | **Exam attachment (admin)** | Each exam can be attached to packages (existing system for free-tier purchase), AND/OR to subscription tiers (Pro, Max, or both). |
 
 ---
@@ -82,7 +82,7 @@ CREATE TABLE subscription_plans (
 
 INSERT INTO subscription_plans (tier, name, description, price_paise, duration_days) VALUES
   ('pro', 'Pro Plan', 'Access all Pro exams for 7 days', 19900, 7),
-  ('max', 'Max Plan', 'Access all Pro + Max exams for 3 months', 39900, 90);
+  ('max', 'Max Plan', 'Access all Pro + Max exams for 3 months', 99900, 90);
 ```
 
 ### 3d. Existing tables — no breaking changes
@@ -105,7 +105,7 @@ INSERT INTO subscription_plans (tier, name, description, price_paise, duration_d
 **Key logic:**
 
 - **Subscribe(userID, tier)** → creates Razorpay order, records payment, on capture → inserts `user_subscriptions` with `expires_at = NOW() + duration_days`
-- **Upgrade(userID)** → only Pro→Max. Deactivates current Pro sub (`active=false`), creates new Max sub with `upgraded_from` pointing to old Pro. Full ₹399 charge.
+- **Upgrade(userID)** → only Pro→Max. Deactivates current Pro sub (`active=false`), creates new Max sub with `upgraded_from` pointing to old Pro. Full ₹999 charge.
 - **ExpireStale()** → background poller (runs every 60s): `UPDATE user_subscriptions SET active = false WHERE expires_at < NOW() AND active = true`
 - **GetMySubscription(userID)** → returns active subscription or null (free tier)
 

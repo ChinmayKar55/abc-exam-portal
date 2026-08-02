@@ -1,22 +1,56 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 
-const PUBLIC_PATHS = ["/", "/login", "/register", "/verify-email", "/forgot-password", "/reset-password"]
+const PUBLIC_PATHS = ["/login", "/register", "/verify-email", "/forgot-password", "/reset-password"]
+
+function isStaticPath(pathname: string): boolean {
+  return (
+    pathname.startsWith("/_next") ||
+    pathname.startsWith("/api/") ||
+    pathname === "/favicon.ico" ||
+    /\.(?:png|jpg|jpeg|gif|webp|svg|ico|woff|woff2|ttf|otf|mp4|mp3|pdf)$/.test(pathname)
+  )
+}
+
+function hostName(request: NextRequest): string {
+  const header = request.headers.get("host") ?? ""
+  return header.split(":")[0]
+}
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
+  const host = hostName(request)
 
-  // Allow public paths and Next.js internals through
-  if (PUBLIC_PATHS.some((p) => p === "/" ? pathname === "/" : pathname.startsWith(p))) {
+  if (isStaticPath(pathname)) {
     return NextResponse.next()
   }
 
-  // Read the persisted Zustand store from localStorage via the cookie mirror
-  // The store is persisted to localStorage — not available server-side.
-  // We use a lightweight cookie ("abc-auth-token") set by the client as the
-  // server-side signal. If it's absent we redirect to login.
-  const token = request.cookies.get("abc-auth-token")?.value
+  // Apex domain: only the landing page is served here.
+  // Everything else (including auth pages) belongs on student.osssc.online.
+  if (host === "osssc.online" || host === "www.osssc.online") {
+    if (pathname === "/") {
+      return NextResponse.next()
+    }
+    const target = request.nextUrl.clone()
+    target.host = "student.osssc.online"
+    return NextResponse.redirect(target)
+  }
 
+  // Student portal: root should not repeat the landing page.
+  // Send authenticated users to dashboard, everyone else to login.
+  if ((host === "student.osssc.online" || host === "localhost") && pathname === "/") {
+    const token = request.cookies.get("abc-auth-token")?.value
+    const target = request.nextUrl.clone()
+    target.pathname = token ? "/dashboard" : "/login"
+    return NextResponse.redirect(target)
+  }
+
+  // Auth protection for non-public paths.
+  if (PUBLIC_PATHS.some((p) => pathname.startsWith(p))) {
+    return NextResponse.next()
+  }
+
+  const token = request.cookies.get("abc-auth-token")?.value
   if (!token) {
     const loginUrl = request.nextUrl.clone()
     loginUrl.pathname = "/login"

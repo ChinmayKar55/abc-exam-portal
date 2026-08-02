@@ -16,8 +16,8 @@ const inter = localFont({
 })
 
 export const metadata: Metadata = {
-  title: { default: "Admin — ABC Exam Portal", template: "%s | Admin" },
-  description: "ABC Exam Portal admin panel",
+  title: { default: "Admin — OSSSC Online", template: "%s | Admin" },
+  description: "OSSSC Online admin panel",
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
