@@ -32,6 +32,8 @@ export function middleware(request: NextRequest) {
       return NextResponse.next()
     }
     const target = request.nextUrl.clone()
+    target.protocol = "https"
+    target.port = ""
     target.host = "student.osssc.online"
     return NextResponse.redirect(target)
   }
