@@ -34,7 +34,7 @@ interface RazorpayResponse {
 interface RazorpayInstance {
   open: () => void
   close: () => void
-  on: (event: string, callback: () => void) => void
+  on: (event: string, callback: (response?: unknown) => void) => void
 }
 
 declare global {
@@ -87,28 +87,39 @@ export function useRazorpay() {
         return
       }
 
+      const openedAt = Date.now()
+      const log = (msg: string, extra?: unknown) => {
+        console.log(`[razorpay ${((Date.now() - openedAt) / 1000).toFixed(1)}s] ${msg}`, extra ?? "")
+      }
+
       let settled = false
-      const settle = (fn?: () => void) => {
+      const settle = (label: string, fn?: () => void) => {
+        log(`settle() called from: ${label}, already settled: ${settled}`)
         if (settled) return
         settled = true
+        clearInterval(heartbeat)
         clearTimeout(stuckTimer)
         fn?.()
       }
 
       const razorpay = new window.Razorpay({
         ...options,
-        handler: (response: RazorpayResponse) => settle(() => options.onSuccess(response)),
+        handler: (response: RazorpayResponse) => settle("handler/success", () => options.onSuccess(response)),
         modal: {
-          ondismiss: () => settle(options.onDismiss),
+          ondismiss: () => settle("modal.ondismiss", options.onDismiss),
         },
       })
 
-      razorpay.on("payment.failed", () => {
-        settle(() => {
+      razorpay.on("payment.failed", (response?: unknown) => {
+        log("payment.failed event received", response)
+        settle("payment.failed", () => {
           razorpay.close()
           options.onError?.()
         })
       })
+
+      // Heartbeat: proves the JS timer context is alive and not throttled/killed.
+      const heartbeat = setInterval(() => log("heartbeat, settled=" + settled), 15000)
 
       // Safety net: some rejection scenarios (e.g. the Razorpay account not
       // being approved to accept payments on this website) never emit a
@@ -116,12 +127,14 @@ export function useRazorpay() {
       // UPI QR/timer still visible. Force-close and surface an error if
       // nothing resolves within a reasonable window.
       const stuckTimer = setTimeout(() => {
-        settle(() => {
+        log("stuckTimer fired, forcing close")
+        settle("stuckTimer", () => {
           razorpay.close()
           options.onError?.()
         })
       }, 3 * 60 * 1000)
 
+      log("calling razorpay.open()")
       razorpay.open()
     },
     []
