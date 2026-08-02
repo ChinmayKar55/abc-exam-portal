@@ -330,7 +330,7 @@ function ExamSeries() {
         <div className="grid md:grid-cols-3 gap-8">
           {EXAMS.map((exam) => (
             <div key={exam.title}
-              className="bg-white rounded-3xl border border-sky-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col">
+              className="group relative bg-white rounded-3xl border border-sky-100 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col">
               <div className="p-6 flex-1">
                 <div className="flex items-start justify-between mb-4">
                   <span className="text-4xl">{exam.icon}</span>
@@ -348,14 +348,17 @@ function ExamSeries() {
                   ))}
                 </div>
               </div>
-              <div className="border-t border-sky-50 px-6 py-4 flex items-center justify-between bg-sky-50/50">
-                <div className="flex gap-4 text-sm text-slate-500">
-                  <span className="flex items-center gap-1"><FileText className="h-3.5 w-3.5" />{exam.tests} tests</span>
-                  <span className="flex items-center gap-1"><BookOpen className="h-3.5 w-3.5" />{exam.questions.toLocaleString()} Qs</span>
-                </div>
-                <Link href="/register" className="text-sky-600 font-semibold text-sm hover:text-sky-700 inline-flex items-center gap-1">
-                  Start <ArrowRight className="h-3.5 w-3.5" />
-                </Link>
+
+              {/* Coming Soon overlay */}
+              <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[#0c1a2e]/90 backdrop-blur-sm opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100 transition-all duration-300 ease-out">
+                <span className="relative flex h-14 w-14 items-center justify-center">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-sky-400/40" />
+                  <span className="relative inline-flex h-14 w-14 items-center justify-center rounded-full bg-sky-500/20 border border-sky-400/40">
+                    <Clock className="h-6 w-6 text-sky-300" />
+                  </span>
+                </span>
+                <span className="text-white font-extrabold text-lg tracking-wide">Coming Soon</span>
+                <span className="text-sky-200 text-xs px-6 text-center">We&apos;re putting the finishing touches on {exam.title} mocks</span>
               </div>
             </div>
           ))}

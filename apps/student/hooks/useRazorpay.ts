@@ -87,18 +87,40 @@ export function useRazorpay() {
         return
       }
 
+      let settled = false
+      const settle = (fn?: () => void) => {
+        if (settled) return
+        settled = true
+        clearTimeout(stuckTimer)
+        fn?.()
+      }
+
       const razorpay = new window.Razorpay({
         ...options,
-        handler: options.onSuccess,
+        handler: (response: RazorpayResponse) => settle(() => options.onSuccess(response)),
         modal: {
-          ondismiss: options.onDismiss,
+          ondismiss: () => settle(options.onDismiss),
         },
       })
 
       razorpay.on("payment.failed", () => {
-        razorpay.close()
-        options.onError?.()
+        settle(() => {
+          razorpay.close()
+          options.onError?.()
+        })
       })
+
+      // Safety net: some rejection scenarios (e.g. the Razorpay account not
+      // being approved to accept payments on this website) never emit a
+      // payment.failed event, leaving the widget open indefinitely with its
+      // UPI QR/timer still visible. Force-close and surface an error if
+      // nothing resolves within a reasonable window.
+      const stuckTimer = setTimeout(() => {
+        settle(() => {
+          razorpay.close()
+          options.onError?.()
+        })
+      }, 3 * 60 * 1000)
 
       razorpay.open()
     },

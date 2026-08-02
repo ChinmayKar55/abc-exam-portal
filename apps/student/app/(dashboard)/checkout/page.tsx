@@ -407,17 +407,17 @@ export default function CheckoutPage() {
               </div>
               <p className="text-[var(--muted-foreground)]">{supportPhone}</p>
               <div className="flex flex-wrap gap-2 text-xs">
-                <a href="/" target="_blank" rel="noopener noreferrer" className="underline text-[var(--muted-foreground)] hover:text-[var(--primary)]">
+                <button type="button" onClick={() => setOpenPolicy("terms")} className="underline text-[var(--muted-foreground)] hover:text-[var(--primary)]">
                   Terms & Conditions
-                </a>
+                </button>
                 <span className="text-[var(--muted-foreground)]">·</span>
-                <a href="/" target="_blank" rel="noopener noreferrer" className="underline text-[var(--muted-foreground)] hover:text-[var(--primary)]">
+                <button type="button" onClick={() => setOpenPolicy("privacy")} className="underline text-[var(--muted-foreground)] hover:text-[var(--primary)]">
                   Privacy Policy
-                </a>
+                </button>
                 <span className="text-[var(--muted-foreground)]">·</span>
-                <a href="/" target="_blank" rel="noopener noreferrer" className="underline text-[var(--muted-foreground)] hover:text-[var(--primary)]">
+                <button type="button" onClick={() => setOpenPolicy("refund")} className="underline text-[var(--muted-foreground)] hover:text-[var(--primary)]">
                   Refund Policy
-                </a>
+                </button>
               </div>
             </CardContent>
           </Card>
