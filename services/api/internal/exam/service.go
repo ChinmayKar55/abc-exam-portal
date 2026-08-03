@@ -399,16 +399,30 @@ func (s *Service) BulkUpdateAccessTier(ctx context.Context, req BulkUpdateAccess
 	return err
 }
 
-// DeleteExam removes an exam and its sources (admin only).
+// DeleteExam removes an exam, its attempts, and its sources (admin only).
 func (s *Service) DeleteExam(ctx context.Context, id string) error {
-	res, err := s.db.Exec(ctx, `DELETE FROM exams WHERE id = $1`, id)
+	tx, err := s.db.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+
+	// exam_question_sources and plan_exams cascade on exam delete.
+	// exam_attempts does not cascade, so remove those first.
+	_, err = tx.Exec(ctx, `DELETE FROM exam_attempts WHERE exam_id = $1`, id)
+	if err != nil {
+		return err
+	}
+
+	res, err := tx.Exec(ctx, `DELETE FROM exams WHERE id = $1`, id)
 	if err != nil {
 		return err
 	}
 	if res.RowsAffected() == 0 {
 		return ErrExamNotFound
 	}
-	return nil
+
+	return tx.Commit(ctx)
 }
 
 // PublishExam sets an exam to published status (admin only).

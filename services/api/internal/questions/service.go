@@ -104,7 +104,7 @@ func (s *Service) DeleteExamSet(ctx context.Context, id string) error {
 	}
 	err := s.db.QueryRow(ctx,
 		`SELECT
-			(SELECT COUNT(*) FROM exams WHERE exam_set_id = $1),
+			(SELECT COUNT(*) FROM exam_question_sources WHERE bank_id = $1),
 			(SELECT COUNT(*) FROM study_materials WHERE exam_set_id = $1)`,
 		id,
 	).Scan(&usedBy.Exams, &usedBy.Materials)

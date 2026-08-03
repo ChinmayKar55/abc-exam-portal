@@ -43,7 +43,7 @@ export function middleware(request: NextRequest) {
   if ((host === "student.osssc.online" || host === "localhost") && pathname === "/") {
     const token = request.cookies.get("abc-auth-token")?.value
     const target = request.nextUrl.clone()
-    target.pathname = token ? "/dashboard" : "/login"
+    target.pathname = token ? "/home" : "/login"
     return NextResponse.redirect(target)
   }
 

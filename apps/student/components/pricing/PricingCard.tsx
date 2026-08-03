@@ -28,7 +28,7 @@ const tierIcons = {
 
 export const tierFeatures: Record<string, string[]> = {
   free: [
-    "5 full-length mock tests / month",
+    "5 full-length mock tests",
     "1,000+ practice MCQs",
     "1 exam series access",
     "Basic performance report",

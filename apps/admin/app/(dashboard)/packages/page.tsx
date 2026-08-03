@@ -8,6 +8,7 @@ import { PageHeader } from "@/components/shared/PageHeader"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { ConfirmDialog } from "@/components/shared/ConfirmDialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { planQueries, type Plan, type CreatePlanInput } from "@/lib/queries/plans"
@@ -61,6 +62,7 @@ export default function PackagesPage() {
   const qc = useQueryClient()
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [deleteId, setDeleteId] = useState<string | null>(null)
   const [form, setForm] = useState<CreatePlanInput>(DEFAULT_FORM)
 
   const { data: plans = [], isLoading } = useQuery({
@@ -130,7 +132,7 @@ export default function PackagesPage() {
         }
       />
       <DataTable
-        columns={columns(handleEdit, (id) => deleteMutation.mutate(id))}
+        columns={columns(handleEdit, setDeleteId)}
         data={plans}
         isLoading={isLoading}
         searchKey="name"
@@ -220,6 +222,19 @@ export default function PackagesPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        open={!!deleteId}
+        onOpenChange={(open) => { if (!open) setDeleteId(null) }}
+        title="Delete package"
+        description={`Are you sure you want to delete "${plans.find((p) => p.id === deleteId)?.name ?? "this package"}"? This will also remove access for any users who purchased it. This action cannot be undone.`}
+        confirmLabel="Delete"
+        loading={deleteMutation.isPending}
+        onConfirm={() => {
+          if (deleteId) deleteMutation.mutate(deleteId)
+          setDeleteId(null)
+        }}
+      />
     </div>
   )
 }

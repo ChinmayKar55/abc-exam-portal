@@ -230,14 +230,28 @@ func (s *Service) setPlanBundles(ctx context.Context, planID string, examIDs, ma
 }
 
 func (s *Service) DeletePlan(ctx context.Context, id string) error {
-	res, err := s.db.Exec(ctx, `DELETE FROM plans WHERE id = $1`, id)
+	tx, err := s.db.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+
+	// plan_exams / plan_materials cascade on plan delete.
+	// user_plans does not cascade, so remove those first.
+	_, err = tx.Exec(ctx, `DELETE FROM user_plans WHERE plan_id = $1`, id)
+	if err != nil {
+		return err
+	}
+
+	res, err := tx.Exec(ctx, `DELETE FROM plans WHERE id = $1`, id)
 	if err != nil {
 		return err
 	}
 	if res.RowsAffected() == 0 {
 		return ErrPlanNotFound
 	}
-	return nil
+
+	return tx.Commit(ctx)
 }
 
 // GetMyPlans returns all active plans the user has purchased.

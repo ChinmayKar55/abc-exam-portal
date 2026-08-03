@@ -449,7 +449,7 @@ function HowItWorks() {
 
 // ─── TESTIMONIALS ───────────────────────────────────────────────────────────
 const TESTIMONIALS = [
-  { name: "Priya Mohanty", role: "Nursing Officer, AIIMS Bhubaneswar", text: "OSSSC Online's mock tests were identical in difficulty to the actual exam. I cleared on my first attempt after 3 months of practice here.", rating: 5, avatar: "PM" },
+  { name: "Priya Mohanty", role: "Nursing Officer, Saheed Laxman Nayak Medical College Hospital, Koraput", text: "OSSSC Online's mock tests were identical in difficulty to the actual exam. I cleared on my first attempt after 3 months of practice here.", rating: 5, avatar: "PM" },
   { name: "Rajesh Sethi", role: "Staff Nurse, SCB Medical", text: "The negative marking feature forced me to be more careful. My accuracy improved from 68% to 89% in just 6 weeks.", rating: 5, avatar: "RS" },
   { name: "Sunita Nayak", role: "Lab Technician, DHH Cuttack", text: "The detailed question explanations after each mock are gold. I finally understand why my wrong answers were wrong.", rating: 5, avatar: "SN" },
   { name: "Abhisek Panda", role: "Paramedical, District Hospital", text: "OMR-style interface is exactly what you need. No surprises on exam day when you've practiced this format 50 times.", rating: 5, avatar: "AP" },

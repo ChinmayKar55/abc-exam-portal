@@ -8,6 +8,7 @@ import {
 import type { ColumnDef } from "@tanstack/react-table"
 import { DataTable } from "@/components/shared/DataTable"
 import { PageHeader } from "@/components/shared/PageHeader"
+import { ConfirmDialog } from "@/components/shared/ConfirmDialog"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
@@ -487,6 +488,7 @@ export default function QuestionBanksPage() {
   const [name, setName] = useState("")
   const [description, setDescription] = useState("")
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [deleteBank, setDeleteBank] = useState<ExamSet | null>(null)
 
   const { data: banks = [], isLoading } = useQuery({
     queryKey: ["exam-sets"],
@@ -567,7 +569,7 @@ export default function QuestionBanksPage() {
                 <Badge variant="ocean" className="font-mono shrink-0">{bank.question_count} Qs</Badge>
                 <Button
                   variant="ghost" size="icon-sm"
-                  onClick={(e) => { e.stopPropagation(); if (confirm(`Delete bank "${bank.name}"? This cannot be undone.`)) deleteMutation.mutate(bank.id) }}
+                  onClick={(e) => { e.stopPropagation(); setDeleteBank(bank) }}
                 >
                   <Trash2 className="h-4 w-4 text-[color:var(--color-danger-500)]" />
                 </Button>
@@ -606,6 +608,19 @@ export default function QuestionBanksPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        open={!!deleteBank}
+        onOpenChange={(open) => { if (!open) setDeleteBank(null) }}
+        title="Delete question bank"
+        description={`Are you sure you want to delete "${deleteBank?.name ?? "this bank"}"? All questions inside it will be removed. This action cannot be undone.`}
+        confirmLabel="Delete"
+        loading={deleteMutation.isPending}
+        onConfirm={() => {
+          if (deleteBank) deleteMutation.mutate(deleteBank.id)
+          setDeleteBank(null)
+        }}
+      />
     </div>
   )
 }
