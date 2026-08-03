@@ -18,10 +18,10 @@ export function LandingHeader() {
   }, [])
 
   const navLinks = [
-    { label: "Exams", href: "#exams" },
-    { label: "Plans", href: "#plans" },
+    { label: "Exams", href: "/#exams" },
+    { label: "Plans", href: "/#plans" },
     { label: "Blogs", href: "/blogs" },
-    { label: "About", href: "#about" },
+    { label: "About", href: "/#about" },
   ]
 
   return (
