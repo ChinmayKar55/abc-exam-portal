@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -239,10 +240,10 @@ func (s *Service) Logout(ctx context.Context, rawToken string) error {
 }
 
 func (s *Service) ForgotPassword(ctx context.Context, req ForgotPasswordRequest) error {
-	var userID, name string
+	var userID, name, role string
 	err := s.db.QueryRow(ctx,
-		`SELECT id, name FROM users WHERE email = $1`, req.Email,
-	).Scan(&userID, &name)
+		`SELECT id, name, role FROM users WHERE email = $1`, req.Email,
+	).Scan(&userID, &name, &role)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil
 	}
@@ -258,7 +259,11 @@ func (s *Service) ForgotPassword(ctx context.Context, req ForgotPasswordRequest)
 		return err
 	}
 
-	resetLink := fmt.Sprintf("%s/reset-password?token=%s", s.cfg.CORS.FrontendURL, rawToken)
+	frontendURL := s.cfg.CORS.FrontendURL
+	if strings.EqualFold(role, "admin") {
+		frontendURL = s.cfg.CORS.AdminURL
+	}
+	resetLink := fmt.Sprintf("%s/reset-password?token=%s", frontendURL, rawToken)
 	go func() {
 		if err := s.mailer.SendPasswordReset(req.Email, name, resetLink); err != nil {
 			log.Error().Err(err).Msg("Failed to send password reset email")
