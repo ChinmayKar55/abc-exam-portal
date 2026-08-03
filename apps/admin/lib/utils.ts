@@ -35,3 +35,13 @@ export function formatFileSize(bytes: number): string {
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
+
+const API_ORIGIN = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8081/api").replace(/\/api\/?$/, "")
+
+/** Resolves a relative asset path (e.g. "/uploads/blogs/xyz.jpg") returned by
+ * the API into an absolute URL pointing at the API's origin. Absolute URLs
+ * (external images) are returned unchanged. */
+export function resolveAssetUrl(path: string): string {
+  if (/^https?:\/\//i.test(path)) return path
+  return `${API_ORIGIN}${path.startsWith("/") ? path : `/${path}`}`
+}

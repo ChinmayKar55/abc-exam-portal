@@ -86,6 +86,16 @@ export async function exitFullscreen(): Promise<void> {
   await Promise.all(exits)
 }
 
+const API_ORIGIN = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8081/api").replace(/\/api\/?$/, "")
+
+/** Resolves a relative asset path (e.g. "/uploads/blogs/xyz.jpg") returned by
+ * the API into an absolute URL pointing at the API's origin. Absolute URLs
+ * (external images) are returned unchanged. */
+export function resolveAssetUrl(path: string): string {
+  if (/^https?:\/\//i.test(path)) return path
+  return `${API_ORIGIN}${path.startsWith("/") ? path : `/${path}`}`
+}
+
 export function formatDurationLabel(days: number): string {
   if (days <= 0) return "forever"
   if (days % 365 === 0) return `${days / 365} year${days / 365 === 1 ? "" : "s"}`

@@ -1,4 +1,4 @@
-import { apiDelete, apiGet, apiPost, apiPut } from "@/lib/api"
+import { api, apiDelete, apiGet, apiPost, apiPut } from "@/lib/api"
 
 export interface Blog {
   id: string
@@ -33,4 +33,10 @@ export const blogQueries = {
 
   delete: (id: string) =>
     apiDelete<{ success: boolean }>(`admin/blogs/${id}`).then((r) => r.success),
+
+  uploadImage: (file: File) => {
+    const form = new FormData()
+    form.append("file", file)
+    return api.post("admin/blogs/images", { body: form }).json<{ url: string; success: boolean }>().then((r) => r.url)
+  },
 }

@@ -4,16 +4,15 @@ import { useState, useEffect, useRef, useMemo } from "react"
 import { useQuery } from "@tanstack/react-query"
 import {
   ArrowRight, CheckCircle2, ChevronDown, Star, Users, BookOpen,
-  Award, Shield, BarChart3, Clock, Menu, X, Zap, Target, TrendingUp,
-  Brain, FileText, MonitorSmartphone, Bell, MapPin,
-  Mail, Phone
+  Award, Shield, BarChart3, Clock, Zap, Target, TrendingUp,
+  Brain, FileText, MonitorSmartphone, Bell, MapPin
 } from "lucide-react"
-import { FaFacebookF, FaInstagram, FaRedditAlien, FaWhatsapp } from "react-icons/fa"
 import { Skeleton } from "@/components/ui/skeleton"
 import { PricingCard, type PricingPlan, tierFeatures, tierDescriptions } from "@/components/pricing/PricingCard"
 import { subscriptionQueries, type SubscriptionPlan } from "@/lib/queries/subscription"
 import { formatDurationLabel } from "@/lib/utils"
-import { PolicyModal } from "@/components/shared/PolicyModal"
+import { LandingHeader } from "./LandingHeader"
+import { LandingFooter } from "./LandingFooter"
 
 // ─── colour palette (sky-blue theme) ───────────────────────────────────────
 // Primary: #0284c7 (sky-600)   Accent: #0ea5e9 (sky-500)
@@ -38,83 +37,6 @@ function useCountUp(target: number, duration = 1800, start = false) {
     requestAnimationFrame(step)
   }, [start, target, duration])
   return val
-}
-
-// ─── NAV ────────────────────────────────────────────────────────────────────
-function Navbar() {
-  const [scrolled, setScrolled] = useState(false)
-  const [open, setOpen] = useState(false)
-
-  useEffect(() => {
-    const handler = () => setScrolled(window.scrollY > 24)
-    window.addEventListener("scroll", handler)
-    return () => window.removeEventListener("scroll", handler)
-  }, [])
-
-  return (
-    <nav className={cn(
-      "fixed top-0 inset-x-0 z-50 transition-all duration-300",
-      scrolled ? "bg-white/95 backdrop-blur-md shadow-sm border-b border-sky-100" : "bg-transparent"
-    )}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-24">
-        {/* Logo */}
-        <a href="/" className="flex items-center gap-2 lg:gap-3 shrink-0">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/osssc-logo.png" alt="OSSSC Online" className="h-27 w-22 object-contain drop-shadow-md shrink-0 translate-y-[9px]" />
-          <span className={cn("font-extrabold text-lg lg:text-xl tracking-widest leading-tight whitespace-nowrap", scrolled ? "text-sky-900" : "text-white")}>
-            OSSSC ONLINE
-          </span>
-        </a>
-
-        {/* Desktop links */}
-        <div className="hidden md:flex items-center gap-4 lg:gap-8 shrink-0">
-          {["Exams", "Plans", "About"].map((item) => (
-            <a key={item} href={`#${item.toLowerCase()}`}
-              className={cn("text-sm font-medium transition-colors hover:text-sky-400 whitespace-nowrap",
-                scrolled ? "text-slate-700" : "text-white/90"
-              )}>
-              {item}
-            </a>
-          ))}
-        </div>
-
-        {/* CTAs */}
-        <div className="hidden md:flex items-center gap-2 lg:gap-3 shrink-0">
-          <Link href="/login"
-            className={cn("text-sm font-semibold px-3 lg:px-4 py-2 rounded-lg transition-colors whitespace-nowrap",
-              scrolled ? "text-sky-700 hover:bg-sky-50" : "text-white/90 hover:text-white"
-            )}>
-            Sign In
-          </Link>
-          <Link href="/register"
-            className="text-sm font-semibold px-3 lg:px-4 py-2 rounded-lg bg-sky-500 hover:bg-sky-600 text-white transition-colors shadow-md whitespace-nowrap">
-            Start Free →
-          </Link>
-        </div>
-
-        {/* Mobile hamburger */}
-        <button onClick={() => setOpen(!open)} className={cn("md:hidden p-2", scrolled ? "text-slate-700" : "text-white")}>
-          {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-        </button>
-      </div>
-
-      {/* Mobile menu */}
-      {open && (
-        <div className="md:hidden bg-white border-b border-sky-100 px-4 py-4 space-y-3">
-          {["Exams", "Plans", "About"].map((item) => (
-            <a key={item} href={`#${item.toLowerCase()}`} onClick={() => setOpen(false)}
-              className="block text-sm font-medium text-slate-700 hover:text-sky-600 py-1">
-              {item}
-            </a>
-          ))}
-          <div className="flex gap-3 pt-2">
-            <Link href="/login" className="flex-1 text-center text-sm font-semibold px-4 py-2 rounded-lg border border-sky-200 text-sky-700">Sign In</Link>
-            <Link href="/register" className="flex-1 text-center text-sm font-semibold px-4 py-2 rounded-lg bg-sky-500 text-white">Start Free</Link>
-          </div>
-        </div>
-      )}
-    </nav>
-  )
 }
 
 // ─── HERO ───────────────────────────────────────────────────────────────────
@@ -782,149 +704,12 @@ function CTABanner() {
   )
 }
 
-// ─── FOOTER ─────────────────────────────────────────────────────────────────
-function Footer() {
-  const quickLinks = [
-    { label: "Home", href: "/" },
-    { label: "Mock Tests", href: "#exams" },
-    { label: "Study Material", href: "#features" },
-    { label: "Current Affairs", href: "#about" },
-    { label: "Blogs", href: "/blogs" },
-    { label: "About Us", href: "#about" },
-    { label: "Contact Us", href: "mailto:abcsupportindia@gmail.com" },
-  ]
-
-  const [openPolicy, setOpenPolicy] = useState<"terms" | "privacy" | "refund" | null>(null)
-
-  const legalLinks = [
-    { label: "Privacy Policy", policy: "privacy" as const },
-    { label: "Terms & Conditions", policy: "terms" as const },
-    { label: "Refund Policy", policy: "refund" as const },
-  ]
-
-  const socialLinks = [
-    { icon: FaInstagram, label: "Instagram", href: "https://www.instagram.com/osssc.online" },
-    { icon: FaFacebookF, label: "Facebook", href: "https://www.facebook.com/profile.php?id=61592002637897" },
-    { icon: FaRedditAlien, label: "Reddit", href: "https://www.reddit.com/r/OSSSC_ONLINE/" },
-    { icon: FaWhatsapp, label: "WhatsApp", href: "https://wa.me/918984858895" },
-  ]
-
-  return (
-    <>
-    <footer className="bg-[#0c1a2e] text-slate-400">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-12">
-          {/* Brand */}
-          <div className="lg:col-span-2 space-y-5">
-            <div className="flex items-center gap-2">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/osssc-logo.png" alt="OSSSC Online" className="h-10 w-10 object-contain" />
-              <div>
-                <span className="block font-extrabold text-white text-sm tracking-wide">OSSSC.Online</span>
-                <span className="block text-xs text-sky-400">An Initiative by ABC Skills</span>
-              </div>
-            </div>
-            <p className="text-sm leading-relaxed max-w-sm">
-              Empowering experienced GNM and Nursing graduates across Odisha to succeed in the OSSSC Nursing Officer recruitment exam through live-alike mock tests, expert-curated questions, and focused preparation resources.
-            </p>
-          </div>
-
-          {/* Quick Links */}
-          <div>
-            <p className="text-white font-semibold text-sm mb-4">Quick Links</p>
-            <ul className="space-y-2.5 text-sm">
-              {quickLinks.map((link) => (
-                <li key={link.label}>
-                  {link.href.startsWith("http") || link.href.startsWith("mailto:") ? (
-                    <a href={link.href} className="hover:text-sky-400 transition-colors">{link.label}</a>
-                  ) : (
-                    <Link href={link.href} className="hover:text-sky-400 transition-colors">{link.label}</Link>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Legal */}
-          <div>
-            <p className="text-white font-semibold text-sm mb-4">Legal</p>
-            <ul className="space-y-2.5 text-sm">
-              {legalLinks.map((link) => (
-                <li key={link.label}>
-                  <button
-                    onClick={() => setOpenPolicy(link.policy)}
-                    className="hover:text-sky-400 transition-colors text-left"
-                  >
-                    {link.label}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Contact + Social */}
-          <div className="space-y-6">
-            <div>
-              <p className="text-white font-semibold text-sm mb-4">Get in Touch</p>
-              <ul className="space-y-3 text-sm">
-                <li className="flex items-start gap-3">
-                  <MapPin className="h-4 w-4 text-sky-400 shrink-0 mt-0.5" />
-                  <span>Bhubaneswar, Odisha</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <Mail className="h-4 w-4 text-sky-400 shrink-0 mt-0.5" />
-                  <a href="mailto:abcsupportindia@gmail.com" className="hover:text-sky-400 transition-colors break-all">
-                    abcsupportindia@gmail.com
-                  </a>
-                </li>
-                <li className="flex items-start gap-3">
-                  <Phone className="h-4 w-4 text-sky-400 shrink-0 mt-0.5" />
-                  <div>
-                    <a href="tel:+918984858895" className="hover:text-sky-400 transition-colors">
-                      +91 89848 58895
-                    </a>
-                    <p className="text-xs text-slate-500 mt-0.5">Registered contact no. & WhatsApp</p>
-                  </div>
-                </li>
-              </ul>
-            </div>
-
-            <div>
-              <p className="text-white font-semibold text-sm mb-3">Follow Us</p>
-              <div className="flex flex-wrap gap-3">
-                {socialLinks.map(({ icon: Icon, label, href }) => (
-                  <a
-                    key={label}
-                    href={href}
-                    target="_blank"
-                    rel="noreferrer"
-                    aria-label={label}
-                    className="h-10 w-10 rounded-full bg-white/5 hover:bg-sky-600/20 flex items-center justify-center text-slate-300 hover:text-white transition-colors"
-                  >
-                    <Icon className="h-5 w-5" />
-                  </a>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="border-t border-white/5 mt-12 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-600">
-          <p>© 2026 OSSSC.Online, an initiative by ABC Skills. All Rights Reserved.</p>
-          <p className="text-xs text-slate-600">Not affiliated with Odisha Staff Selection Commission. Practice platform only.</p>
-        </div>
-      </div>
-    </footer>
-    <PolicyModal type={openPolicy} onClose={() => setOpenPolicy(null)} />
-    </>
-  )
-}
 
 // ─── ROOT ───────────────────────────────────────────────────────────────────
 export default function LandingPage() {
   return (
     <div className="font-[var(--font-inter)]">
-      <Navbar />
+      <LandingHeader />
       <Hero />
       <Stats />
       <ExamSeries />
@@ -935,7 +720,7 @@ export default function LandingPage() {
       <AboutUs />
       <FAQ />
       <CTABanner />
-      <Footer />
+      <LandingFooter />
     </div>
   )
 }
