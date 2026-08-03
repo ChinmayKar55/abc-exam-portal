@@ -2,10 +2,28 @@ package blog
 
 import (
 	"errors"
+	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 )
+
+const (
+	blogImageDir    = "./storage/blogs"
+	blogImageMaxMB  = 5
+	blogImageMaxSiz = blogImageMaxMB * 1024 * 1024
+)
+
+var allowedBlogImageExt = map[string]bool{
+	".jpg":  true,
+	".jpeg": true,
+	".png":  true,
+	".webp": true,
+	".gif":  true,
+}
 
 type Handler struct {
 	svc *Service
@@ -90,6 +108,40 @@ func (h *Handler) Update(c *fiber.Ctx) error {
 		return err
 	}
 	return c.JSON(fiber.Map{"success": true, "data": b})
+}
+
+// UploadImage handles inline blog image uploads for use in post content.
+// It returns a public URL that admins can insert into the content textarea
+// as a `![alt](url)` marker.
+func (h *Handler) UploadImage(c *fiber.Ctx) error {
+	file, err := c.FormFile("file")
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, "file is required")
+	}
+
+	if file.Size > blogImageMaxSiz {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("image must be smaller than %dMB", blogImageMaxMB))
+	}
+
+	ext := strings.ToLower(filepath.Ext(file.Filename))
+	if !allowedBlogImageExt[ext] {
+		return fiber.NewError(fiber.StatusBadRequest, "only .jpg, .jpeg, .png, .webp and .gif images are supported")
+	}
+
+	if err := os.MkdirAll(blogImageDir, 0755); err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, "failed to prepare storage")
+	}
+
+	filename := uuid.New().String() + ext
+	destPath := filepath.Join(blogImageDir, filename)
+	if err := c.SaveFile(file, destPath); err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, "failed to save image")
+	}
+
+	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
+		"success": true,
+		"url":     "/uploads/blogs/" + filename,
+	})
 }
 
 func (h *Handler) Delete(c *fiber.Ctx) error {

@@ -200,6 +200,7 @@ func Register(app *fiber.App, db *pgxpool.Pool, rdb *redis.Client, cfg *config.C
 	adminGroup.Post("/blogs", blogHandler.Create)
 	adminGroup.Put("/blogs/:id", blogHandler.Update)
 	adminGroup.Delete("/blogs/:id", blogHandler.Delete)
+	adminGroup.Post("/blogs/images", blogHandler.UploadImage)
 
 	// Mock checkout UI (dev only)
 	if cfg.Payment.Provider == "mock" {

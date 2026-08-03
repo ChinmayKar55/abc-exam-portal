@@ -42,6 +42,10 @@ func main() {
 		ReadTimeout:  cfg.RequestTimeout,
 		WriteTimeout: cfg.RequestTimeout,
 		IdleTimeout:  2 * cfg.RequestTimeout,
+		// Default is 4MB, which is below the 5MB blog image upload limit
+		// enforced in the blog handler. Raise it so legitimate uploads
+		// (question PDFs/DOCXs and blog images) aren't rejected here first.
+		BodyLimit: 10 * 1024 * 1024,
 	})
 
 	app.Use(recover.New())
@@ -55,6 +59,8 @@ func main() {
 		AllowMethods:     "GET, POST, PUT, DELETE, OPTIONS",
 		AllowCredentials: true,
 	}))
+
+	app.Static("/uploads/blogs", "./storage/blogs")
 
 	app.Get("/health", func(c *fiber.Ctx) error {
 		return c.JSON(fiber.Map{
