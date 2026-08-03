@@ -1,40 +1,17 @@
 "use client"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import {
-  BookOpen, LayoutDashboard, Trophy, User, LogOut, CreditCard, Crown, Receipt,
-} from "lucide-react"
+import { LogOut } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useAuthStore } from "@/store/auth"
 import { authQueries } from "@/lib/queries/auth"
-import { useQuery } from "@tanstack/react-query"
-import { subscriptionQueries } from "@/lib/queries/subscription"
-import { useAuthReady } from "@/lib/providers"
-
-const baseNav = [
-  { href: "/home",         label: "Dashboard",  icon: LayoutDashboard },
-  { href: "/exams",        label: "Exams",      icon: BookOpen },
-  { href: "/results",      label: "My Results", icon: Trophy },
-  { href: "/plans",        label: "Packages",   icon: CreditCard },
-  { href: "/subscription", label: "My Plan", icon: Crown },
-  { href: "/orders",       label: "My Orders",  icon: Receipt },
-  { href: "/profile",      label: "Profile",    icon: User },
-]
+import { useDashboardNav } from "./nav"
 
 export function Sidebar() {
   const pathname = usePathname()
   const router = useRouter()
   const { user, logout } = useAuthStore()
-  const isAuthReady = useAuthReady()
-
-  const { data: mySub } = useQuery({
-    queryKey: ["my-subscription"],
-    queryFn: subscriptionQueries.mySubscription,
-    enabled: isAuthReady,
-  })
-
-  const showPackages = isAuthReady && mySub?.tier !== "pro" && mySub?.tier !== "max"
-  const nav = baseNav.filter((item) => item.href !== "/plans" || showPackages)
+  const nav = useDashboardNav()
 
   const handleLogout = async () => {
     try { await authQueries.logout() } catch {}

@@ -2,20 +2,11 @@
 import { useState } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { Menu, X, LayoutDashboard, BookOpen, Users, ClipboardList, CreditCard, Package, Crown, LogOut, Library } from "lucide-react"
+import { Menu, X, LogOut } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useAuthStore } from "@/store/auth"
 import { authQueries } from "@/lib/queries/auth"
-
-const nav = [
-  { href: "/dashboard",    label: "Dashboard",       icon: LayoutDashboard },
-  { href: "/exams",        label: "Exams",           icon: BookOpen },
-  { href: "/exam-sets",    label: "Question Banks",  icon: Library },
-  { href: "/users",        label: "Users",           icon: Users },
-  { href: "/attempts",     label: "Attempts",        icon: ClipboardList },
-  { href: "/packages",     label: "Packages",        icon: Package },
-  { href: "/subscription", label: "Subscription",    icon: Crown },
-]
+import { adminNavItems as nav } from "./nav"
 
 export function AdminMobileNav() {
   const [open, setOpen] = useState(false)

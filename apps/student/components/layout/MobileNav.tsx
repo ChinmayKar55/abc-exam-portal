@@ -2,24 +2,18 @@
 import { useState } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { Menu, X, BookOpen, LayoutDashboard, Trophy, User, CreditCard, LogOut } from "lucide-react"
+import { Menu, X, LogOut } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useAuthStore } from "@/store/auth"
 import { authQueries } from "@/lib/queries/auth"
-
-const nav = [
-  { href: "/home",    label: "Dashboard",  icon: LayoutDashboard },
-  { href: "/exams",   label: "Exams",      icon: BookOpen },
-  { href: "/results", label: "My Results", icon: Trophy },
-  { href: "/plans",   label: "Plans",      icon: CreditCard },
-  { href: "/profile", label: "Profile",    icon: User },
-]
+import { useDashboardNav } from "./nav"
 
 export function MobileNav() {
   const [open, setOpen] = useState(false)
   const pathname = usePathname()
   const router = useRouter()
   const { user, logout } = useAuthStore()
+  const nav = useDashboardNav()
 
   const handleLogout = async () => {
     try { await authQueries.logout() } catch {}
