@@ -25,10 +25,11 @@ export function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // Apex domain: only the landing page is served here.
-  // Everything else (including auth pages) belongs on student.osssc.online.
+  // Apex domain: only the landing page (and public blog content) is served
+  // here. Everything else (including auth pages) belongs on
+  // student.osssc.online.
   if (host === "osssc.online" || host === "www.osssc.online") {
-    if (pathname === "/") {
+    if (pathname === "/" || pathname.startsWith("/blogs")) {
       return NextResponse.next()
     }
     const target = request.nextUrl.clone()

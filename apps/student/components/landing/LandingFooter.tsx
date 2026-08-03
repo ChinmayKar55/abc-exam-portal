@@ -9,11 +9,11 @@ import { PolicyModal } from "@/components/shared/PolicyModal"
 export function LandingFooter() {
   const quickLinks = [
     { label: "Home", href: "/" },
-    { label: "Mock Tests", href: "#exams" },
-    { label: "Study Material", href: "#features" },
-    { label: "Current Affairs", href: "#about" },
+    { label: "Mock Tests", href: "/#exams" },
+    { label: "Study Material", href: "/#features" },
+    { label: "Current Affairs", href: "/#about" },
     { label: "Blogs", href: "/blogs" },
-    { label: "About Us", href: "#about" },
+    { label: "About Us", href: "/#about" },
     { label: "Contact Us", href: "mailto:abcsupportindia@gmail.com" },
   ]
 
