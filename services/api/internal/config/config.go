@@ -68,6 +68,10 @@ type CORSConfig struct {
 	FrontendURL string
 	AdminURL    string
 	BackendURL  string
+	// ExtraOrigins is a comma-separated list of additional origins allowed to
+	// call the API (e.g. the apex marketing domain that also serves /blogs
+	// directly, in addition to the student subdomain).
+	ExtraOrigins string
 }
 
 type RateLimitConfig struct {
@@ -119,9 +123,10 @@ func Load() *Config {
 			LocalPath: getEnv("STORAGE_LOCAL_PATH", "./storage"),
 		},
 		CORS: CORSConfig{
-			FrontendURL: getEnv("FRONTEND_URL", "http://localhost:3000"),
-			AdminURL:    getEnv("ADMIN_URL", "http://localhost:3001"),
-			BackendURL:  getEnv("BACKEND_URL", "http://localhost:8081"),
+			FrontendURL:  getEnv("FRONTEND_URL", "http://localhost:3000"),
+			AdminURL:     getEnv("ADMIN_URL", "http://localhost:3001"),
+			BackendURL:   getEnv("BACKEND_URL", "http://localhost:8081"),
+			ExtraOrigins: getEnv("EXTRA_CORS_ORIGINS", ""),
 		},
 		RateLimit: RateLimitConfig{
 			Max:     getEnvInt("RATE_LIMIT_MAX", 200),
