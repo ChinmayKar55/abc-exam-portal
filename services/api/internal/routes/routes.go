@@ -13,6 +13,7 @@ import (
 
 	"github.com/abc-exam/api/internal/admin"
 	"github.com/abc-exam/api/internal/auth"
+	"github.com/abc-exam/api/internal/blog"
 	"github.com/abc-exam/api/internal/config"
 	"github.com/abc-exam/api/internal/email"
 	"github.com/abc-exam/api/internal/exam"
@@ -102,6 +103,13 @@ func Register(app *fiber.App, db *pgxpool.Pool, rdb *redis.Client, cfg *config.C
 	api.Post("/verify-payment", authMw, plansHandler.VerifyPayment)
 	api.Post("/webhooks/payment", plansHandler.HandleWebhook)
 
+	// Blogs (public read, admin-only write)
+	blogSvc := blog.NewService(db)
+	blogHandler := blog.NewHandler(blogSvc)
+
+	api.Get("/blogs", blogHandler.ListPublished)
+	api.Get("/blogs/:slug", blogHandler.GetBySlug)
+
 	// Question bank (admin-only write, authenticated read)
 	qSvc := questions.NewService(db)
 	qHandler := questions.NewHandler(qSvc, db)
@@ -186,6 +194,12 @@ func Register(app *fiber.App, db *pgxpool.Pool, rdb *redis.Client, cfg *config.C
 	adminGroup.Get("/attempts", adminHandler.ListAttempts)
 	adminGroup.Get("/attempts/:attemptId/violations", examHandler.GetViolations)
 	adminGroup.Get("/uploads", adminHandler.ListUploads)
+
+	adminGroup.Get("/blogs", blogHandler.List)
+	adminGroup.Get("/blogs/:id", blogHandler.Get)
+	adminGroup.Post("/blogs", blogHandler.Create)
+	adminGroup.Put("/blogs/:id", blogHandler.Update)
+	adminGroup.Delete("/blogs/:id", blogHandler.Delete)
 
 	// Mock checkout UI (dev only)
 	if cfg.Payment.Provider == "mock" {

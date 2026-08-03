@@ -3,7 +3,7 @@ import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import {
   LayoutDashboard, BookOpen, Users, ClipboardList,
-  CreditCard, Package, Crown, LogOut, Library,
+  CreditCard, Package, Crown, LogOut, Library, FileText,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useAuthStore } from "@/store/auth"
@@ -13,6 +13,7 @@ const nav = [
   { href: "/dashboard",    label: "Dashboard",       icon: LayoutDashboard },
   { href: "/exams",        label: "Exams",           icon: BookOpen },
   { href: "/exam-sets",    label: "Question Banks",  icon: Library },
+  { href: "/blogs",        label: "Blogs",           icon: FileText },
   { href: "/users",        label: "Users",           icon: Users },
   { href: "/attempts",     label: "Attempts",        icon: ClipboardList },
   { href: "/packages",     label: "Packages",        icon: Package },

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 
-const PUBLIC_PATHS = ["/login", "/register", "/verify-email", "/forgot-password", "/reset-password"]
+const PUBLIC_PATHS = ["/login", "/register", "/verify-email", "/forgot-password", "/reset-password", "/blogs"]
 
 function isStaticPath(pathname: string): boolean {
   return (
