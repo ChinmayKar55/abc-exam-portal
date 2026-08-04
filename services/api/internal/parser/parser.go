@@ -22,15 +22,21 @@ type ParsedQuestion struct {
 	Explanation   string `json:"explanation"`
 }
 
-// MCQ format (from sample):
+// MCQ formats supported:
 //
 //   {N}. {question text}: (a) option (b) option (c) option (d) option Answer: ({letter})
+//   {N}. {question text}: a. option b. option c. option d. option Answer: {letter}
 //
 // Options may span across text segments in the XML so we work on normalized plain text.
 
 var (
 	reQuestion = regexp.MustCompile(
-		`(?i)\d+\.\s+(.+?)\s*\(a\)\s*(.+?)\s*\(b\)\s*(.+?)\s*\(c\)\s*(.+?)\s*\(d\)\s*(.+?)\s+Answer\s*:\s*\(([abcd])\)`,
+		`(?i)\d+\.\s+(.+?)\s*` +
+			`(?:\(a\)|a\.)\s*(.+?)\s*` +
+			`(?:\(b\)|b\.)\s*(.+?)\s*` +
+			`(?:\(c\)|c\.)\s*(.+?)\s*` +
+			`(?:\(d\)|d\.)\s*(.+?)\s*` +
+			`Answer\s*:\s*(?:\(?)([abcd])(?:\)?)`,
 	)
 )
 
